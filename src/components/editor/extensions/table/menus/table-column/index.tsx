@@ -1,17 +1,17 @@
+import * as PopoverMenu from "@/components/ui/popover-menu";
 import { BubbleMenu as BaseBubbleMenu } from "@tiptap/react";
 import React, { useCallback } from "react";
-import * as PopoverMenu from "@/components/ui/popover-menu";
 
-import { Toolbar } from "@/components/ui/toolbar";
-import { isColumnGripSelected } from "./utils";
-import { Icon } from "@/components/ui/icon";
 import {
   type MenuProps,
   type ShouldShowProps,
 } from "@/components/editor/menus/types";
+import { Icon } from "@/components/ui/icon";
+import { Toolbar } from "@/components/ui/toolbar";
+import { isColumnGripSelected } from "./utils";
 
 export const TableColumnMenu = React.memo(
-  ({ editor, appendTo }: MenuProps): JSX.Element => {
+  ({ editor }: MenuProps): JSX.Element => {
     const shouldShow = useCallback(
       ({ view, state, from }: ShouldShowProps) => {
         if (!state) {
@@ -43,9 +43,6 @@ export const TableColumnMenu = React.memo(
         pluginKey="tableColumnMenu"
         updateDelay={0}
         tippyOptions={{
-          appendTo: () => {
-            return appendTo?.current as HTMLElement;
-          },
           offset: [0, 15],
           popperOptions: {
             modifiers: [{ name: "flip", enabled: false }],

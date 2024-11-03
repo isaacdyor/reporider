@@ -14,7 +14,10 @@ export default async function EditorPage({ params }: PageProps) {
   return (
     <DashboardContentLayout
       rightComponent={<EditorActions />}
-      routes={[{ label: "Editor", href: `/editor/${id}` }]}
+      routes={[
+        { label: "Editor", href: `/editor/${id}` },
+        { label: article?.title ?? "Untitled", href: `/editor/${id}` },
+      ]}
     >
       <Editor content={article?.content ?? ""} />
     </DashboardContentLayout>

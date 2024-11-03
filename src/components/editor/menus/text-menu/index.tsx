@@ -34,24 +34,41 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
     <BubbleMenu
       tippyOptions={{
         popperOptions: {
+          strategy: "fixed",
           placement: "top-start",
           modifiers: [
             {
               name: "preventOverflow",
               options: {
-                boundary: "viewport",
+                boundary: ".sidebar-inset",
                 padding: 8,
+                altAxis: true,
+                mainAxis: true,
+                tether: false,
+                rootBoundary: ".sidebar-inset",
               },
             },
             {
               name: "flip",
               options: {
                 fallbackPlacements: ["bottom-start", "top-end", "bottom-end"],
+                padding: 8,
+              },
+            },
+            // Add a new modifier to limit the size
+            {
+              name: "maxSize",
+              options: {
+                boundary: ".sidebar-inset",
+                padding: 8,
+                // Limit both width and height
+                limitWidth: true,
+                limitHeight: true,
               },
             },
           ],
         },
-        maxWidth: "calc(100vw - 16px)",
+        maxWidth: "none",
       }}
       editor={editor}
       pluginKey="textMenu"

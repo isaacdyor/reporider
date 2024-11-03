@@ -7,6 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import Link from "next/link";
 
 export type LinkPreviewPanelProps = {
   url: string;
@@ -21,14 +22,14 @@ export const LinkPreviewPanel = ({
 }: LinkPreviewPanelProps) => {
   return (
     <Surface className="flex items-center gap-2 p-2">
-      <a
+      <Link
         href={url}
         target="_blank"
         rel="noopener noreferrer"
         className="break-all text-sm underline"
       >
         {url}
-      </a>
+      </Link>
       <Toolbar.Divider />
       <TooltipProvider>
         <Tooltip>

@@ -5,7 +5,7 @@ import { type MenuProps } from "../types";
 import { LinkPreviewPanel } from "@/components/editor/panels/link-preview-panel";
 import { LinkEditorPanel } from "@/components/editor/panels";
 
-export const LinkMenu = ({ editor, appendTo }: MenuProps): JSX.Element => {
+export const LinkMenu = ({ editor }: MenuProps): JSX.Element => {
   const [showEdit, setShowEdit] = useState(false);
   const { link, target } = useEditorState<{
     link: string | null;
@@ -59,9 +59,7 @@ export const LinkMenu = ({ editor, appendTo }: MenuProps): JSX.Element => {
         popperOptions: {
           modifiers: [{ name: "flip", enabled: false }],
         },
-        appendTo: () => {
-          return appendTo?.current as HTMLElement;
-        },
+
         onHidden: () => {
           setShowEdit(false);
         },

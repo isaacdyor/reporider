@@ -5,7 +5,7 @@ import { api } from "@/trpc/server";
 export default async function ArticlesPage() {
   const articles = await api.articles.getAll();
   return (
-    <DashboardContentLayout>
+    <DashboardContentLayout routes={[{ label: "Articles", href: "/articles" }]}>
       <div>
         {articles.map((article) => (
           <ArticleCard key={article.id} article={article} />

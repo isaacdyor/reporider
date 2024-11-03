@@ -22,6 +22,7 @@ export function ProseMirrorRenderer({ content }: ProseMirrorRendererProps) {
         (e): e is AnyExtension => e !== undefined,
       ),
       content: parsedContent,
+      immediatelyRender: false,
       editable: false,
       editorProps: {
         attributes: {

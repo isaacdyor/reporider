@@ -1,12 +1,12 @@
+import React from "react";
 import {
   Breadcrumb,
-  BreadcrumbList,
   BreadcrumbItem,
   BreadcrumbLink,
-  BreadcrumbSeparator,
+  BreadcrumbList,
   BreadcrumbPage,
+  BreadcrumbSeparator,
 } from "./ui/breadcrumb";
-import { Separator } from "./ui/separator";
 import { SidebarTrigger } from "./ui/sidebar";
 
 interface DashboardContentLayoutProps {
@@ -26,32 +26,29 @@ export function DashboardContentLayout({
   return (
     <div className="flex flex-col">
       <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-2 bg-background pl-2 pr-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <SidebarTrigger className="bg-background" />
-
-          {routes && routes.length > 0 && (
-            <>
-              <Separator orientation="vertical" className="mr-2 h-4" />
-
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {routes.slice(0, -1).map((route, index) => (
-                    <BreadcrumbItem key={index} className="hidden md:block">
-                      <BreadcrumbLink href={route.href}>
-                        {route.label}
-                      </BreadcrumbLink>
-                      <BreadcrumbSeparator />
-                    </BreadcrumbItem>
-                  ))}
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>
-                      {routes[routes.length - 1]?.label}
-                    </BreadcrumbPage>
+          <Breadcrumb>
+            <BreadcrumbList>
+              {routes?.slice(0, -1).map((route, index) => (
+                <React.Fragment key={index}>
+                  <BreadcrumbItem key={index}>
+                    <BreadcrumbLink href={route.href}>
+                      {route.label}
+                    </BreadcrumbLink>
                   </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </>
-          )}
+                  <BreadcrumbSeparator className="hidden md:block" />
+                </React.Fragment>
+              ))}
+              {routes && routes.length > 0 && (
+                <BreadcrumbItem>
+                  <BreadcrumbPage>
+                    {routes[routes.length - 1]?.label}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              )}
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
         {rightComponent}
       </header>

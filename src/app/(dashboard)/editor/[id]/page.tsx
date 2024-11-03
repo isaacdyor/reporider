@@ -12,7 +12,10 @@ export default async function EditorPage({ params }: PageProps) {
   const article = await api.articles.getById({ id });
 
   return (
-    <DashboardContentLayout rightComponent={<EditorActions />}>
+    <DashboardContentLayout
+      rightComponent={<EditorActions />}
+      routes={[{ label: "Editor", href: `/editor/${id}` }]}
+    >
       <Editor content={article?.content ?? ""} />
     </DashboardContentLayout>
   );

@@ -16,7 +16,12 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   return (
-    <DashboardContentLayout>
+    <DashboardContentLayout
+      routes={[
+        { label: "Articles", href: "/articles" },
+        { label: article.title, href: `/articles/${article.id}` },
+      ]}
+    >
       <article className="prose prose-slate max-w-none p-6">
         <ProseMirrorRenderer content={article.content} />
       </article>

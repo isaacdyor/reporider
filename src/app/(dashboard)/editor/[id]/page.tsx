@@ -26,7 +26,7 @@ export default async function EditorPage({ params }: PageProps) {
     >
       <EditorHeader article={article} />
 
-      <Editor content={article?.content ?? ""} />
+      <Editor article={article} />
     </DashboardContentLayout>
   );
 }

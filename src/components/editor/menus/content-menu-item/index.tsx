@@ -31,12 +31,6 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
     }
   }, [editor, menuOpen]);
 
-  useEffect(() => {
-    editor.on("update", ({ editor }) => {
-      console.log("Editor content:", editor.getJSON());
-    });
-  }, [editor]);
-
   return (
     <DragHandle
       pluginKey="ContentItemMenu"

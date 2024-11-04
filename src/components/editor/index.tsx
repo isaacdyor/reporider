@@ -17,9 +17,10 @@ import { ContentItemMenu } from "./menus/content-menu-item";
 import { TextMenu } from "./menus/text-menu";
 
 import "@/styles/index.css";
+import { type Article } from "@prisma/client";
 
-export const Editor = ({ content }: { content: string }) => {
-  const { editor } = useBlockEditor({ content });
+export const Editor = ({ article }: { article: Article }) => {
+  const { editor } = useBlockEditor({ article });
 
   if (!editor) {
     return null;

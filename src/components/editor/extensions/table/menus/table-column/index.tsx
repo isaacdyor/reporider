@@ -18,8 +18,6 @@ export const TableColumnMenu = React.memo(
           return false;
         }
 
-        console.log("from", from);
-
         return isColumnGripSelected({ editor, view, state, from: from ?? 0 });
       },
       [editor],

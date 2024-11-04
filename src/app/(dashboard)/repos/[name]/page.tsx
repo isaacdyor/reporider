@@ -42,6 +42,8 @@ export default async function RepoPage({ params }: PageProps) {
     ),
   );
 
+  console.log(commitsWithPatches);
+
   return (
     <DashboardContentLayout>
       <div>

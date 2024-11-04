@@ -1,6 +1,6 @@
 import { DashboardContentLayout } from "@/components/dashboard-content-layout";
 import { Editor } from "@/components/editor";
-import { EditorActions } from "@/components/editor/editor-actions";
+import { EditorTopbar } from "@/components/editor/editor-topbar";
 import EditorHeader from "@/components/editor/editor-header";
 import { api } from "@/trpc/server";
 
@@ -18,7 +18,7 @@ export default async function EditorPage({ params }: PageProps) {
 
   return (
     <DashboardContentLayout
-      rightComponent={<EditorActions />}
+      rightComponent={<EditorTopbar article={article} />}
       routes={[
         { label: "Editor", href: `/editor/${id}` },
         { label: article?.title ?? "Untitled", href: `/editor/${id}` },

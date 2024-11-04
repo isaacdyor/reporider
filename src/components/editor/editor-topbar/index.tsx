@@ -1,16 +1,17 @@
 "use client";
 
-import { useIsSaving } from "@/stores/editor-store";
-import { CheckCheck, RefreshCw } from "lucide-react";
-import { Button } from "../ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useIsSaving } from "@/stores/editor-store";
+import { type Article } from "@prisma/client";
+import { CheckCheck, RefreshCw } from "lucide-react";
+import { ExportButton } from "./export-button";
 
-export function EditorActions() {
+export function EditorTopbar({ article }: { article: Article }) {
   const isSaving = useIsSaving();
 
   return (
@@ -32,7 +33,7 @@ export function EditorActions() {
           </Tooltip>
         </TooltipProvider>
       )}
-      <Button size="thin">Export</Button>
+      <ExportButton article={article} />
     </div>
   );
 }

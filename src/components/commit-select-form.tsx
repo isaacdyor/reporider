@@ -42,6 +42,7 @@ export function CommitSelectForm({ commits }: CommitSelectFormProps) {
         createArticle({
           title: "new blog",
           content: data,
+          tags: ["typescript", "nextjs", "prisma"],
         });
       },
     });

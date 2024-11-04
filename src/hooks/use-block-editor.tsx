@@ -20,7 +20,6 @@ export const useBlockEditor = ({ content }: { content: string }) => {
     {
       immediatelyRender: false,
       shouldRerenderOnTransaction: false,
-      autofocus: true,
       content: parsedContent,
       extensions: [...ExtensionKit()].filter(
         (e): e is AnyExtension => e !== undefined,

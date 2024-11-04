@@ -18,6 +18,7 @@ model Article {
   id        String   @id @default(uuid())
   userId    String /// @zod.custom.omit([model, input])
   title     String
+  tags      String[]
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -37,7 +37,7 @@ export function DashboardContentLayout({
                       {route.label}
                     </BreadcrumbLink>
                   </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbSeparator />
                 </React.Fragment>
               ))}
               {routes && routes.length > 0 && (

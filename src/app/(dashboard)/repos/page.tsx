@@ -1,9 +1,9 @@
 import { DashboardContentLayout } from "@/components/dashboard-content-layout";
 import { RepoCard } from "@/components/repo-card";
-import { getOctokit } from "@/lib/github";
+import { getOctokit } from "@/lib/octokit";
 
 export default async function DashboardPage() {
-  const octokit = await getOctokit();
+  const octokit = await getOctokit({ pathname: "/repos" });
 
   const { data: repos } = await octokit.rest.repos.listForAuthenticatedUser({
     sort: "updated",

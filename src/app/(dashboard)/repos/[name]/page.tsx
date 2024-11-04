@@ -1,6 +1,6 @@
 import { CommitSelectForm } from "@/components/commit-select-form";
 import { DashboardContentLayout } from "@/components/dashboard-content-layout";
-import { getOctokit } from "@/lib/github";
+import { getOctokit } from "@/lib/octokit";
 import { getUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 

@@ -69,61 +69,64 @@ export function ExportButton({ article }: { article: Article }) {
         <Button size="thin">Export</Button>
       </PopoverTrigger>
       <PopoverContent className="w-80">
-        <div className="flex flex-col gap-2">
-          <Label>Export as</Label>
-          <Select
-            value={exportType}
-            onValueChange={(value) =>
-              setExportType(value as "prose-mirror" | "html")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a file type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="prose-mirror">Prose Mirror</SelectItem>
-                <SelectItem value="html">HTML</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <div className="flex items-center gap-2">
-            <Button
-              className="flex w-full gap-2"
-              size="sm"
-              variant="outline"
-              onClick={onCopy}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label>Export as</Label>
+            <Select
+              value={exportType}
+              onValueChange={(value) =>
+                setExportType(value as "prose-mirror" | "html")
+              }
             >
-              {copied ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </>
-              )}
-            </Button>
-            <Button
-              className="flex w-full gap-2"
-              size="sm"
-              onClick={onDownload}
-            >
-              {downloaded ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Downloaded
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4" />
-                  Download
-                </>
-              )}
-            </Button>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a file type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="prose-mirror">Prose Mirror</SelectItem>
+                  <SelectItem value="html">HTML</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <Button
+                className="flex w-full gap-2"
+                size="sm"
+                variant="outline"
+                onClick={onCopy}
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copy
+                  </>
+                )}
+              </Button>
+              <Button
+                className="flex w-full gap-2"
+                size="sm"
+                onClick={onDownload}
+              >
+                {downloaded ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Downloaded
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Download
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
+          <Button disabled>Export to Dev.to</Button>
         </div>
       </PopoverContent>
     </Popover>

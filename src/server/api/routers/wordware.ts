@@ -10,6 +10,15 @@ const endpoint = `https://api.wordware.ai/v1alpha/apps/${orgSlug}/${appSlug}/${v
 
 const responseSchema = z.object({
   outputs: z.object({
+    title: z.string().transform((str) => str.replace(/^"|"$/g, "")),
+    tags: z.string().transform((str) => {
+      try {
+        return JSON.parse(str) as string[];
+      } catch {
+        // Fallback to splitting if not valid JSON
+        return str.split(",").map((tag) => tag.trim());
+      }
+    }),
     article: z.string(),
   }),
 });
@@ -38,7 +47,6 @@ export const wordwareRouter = createTRPCRouter({
       const json = (await response.json()) as unknown;
       console.log(json);
       const result = responseSchema.parse(json);
-      console.log(result);
-      return result.outputs.article;
+      return result.outputs;
     }),
 });

@@ -23,6 +23,11 @@ export function DashboardContentLayout({
   routes,
   rightComponent,
 }: DashboardContentLayoutProps) {
+  const truncatedRoutes = routes?.map((route) => ({
+    ...route,
+    label:
+      route.label.length > 20 ? route.label.slice(0, 20) + "..." : route.label,
+  }));
   return (
     <div className="flex flex-col">
       <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-2 bg-background pl-2 pr-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -30,7 +35,7 @@ export function DashboardContentLayout({
           <SidebarTrigger className="bg-background" />
           <Breadcrumb>
             <BreadcrumbList>
-              {routes?.slice(0, -1).map((route, index) => (
+              {truncatedRoutes?.slice(0, -1).map((route, index) => (
                 <React.Fragment key={index}>
                   <BreadcrumbItem key={index}>
                     <BreadcrumbLink href={route.href}>
@@ -40,10 +45,10 @@ export function DashboardContentLayout({
                   <BreadcrumbSeparator />
                 </React.Fragment>
               ))}
-              {routes && routes.length > 0 && (
+              {truncatedRoutes && truncatedRoutes.length > 0 && (
                 <BreadcrumbItem>
                   <BreadcrumbPage>
-                    {routes[routes.length - 1]?.label}
+                    {truncatedRoutes[truncatedRoutes.length - 1]?.label}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               )}

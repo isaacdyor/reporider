@@ -40,9 +40,9 @@ export function CommitSelectForm({ commits }: CommitSelectFormProps) {
     api.wordware.getDraft.useMutation({
       onSuccess: (data) => {
         createArticle({
-          title: "new blog",
-          content: data,
-          tags: ["typescript", "nextjs", "prisma"],
+          title: data.title,
+          content: data.article,
+          tags: data.tags,
         });
       },
     });

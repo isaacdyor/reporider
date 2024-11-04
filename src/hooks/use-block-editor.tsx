@@ -5,6 +5,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { ExtensionKit } from "@/components/editor/extensions/extension-kit";
 import { api } from "@/trpc/react";
 import { type Article } from "@prisma/client";
+import { useEditorStoreActions } from "@/stores/editor-store";
 
 declare global {
   interface Window {
@@ -13,6 +14,7 @@ declare global {
 }
 
 export const useBlockEditor = ({ article }: { article: Article }) => {
+  const { setIsSaving } = useEditorStoreActions();
   const content = article.content;
   let parsedContent: JSONContent | string = content;
   try {
@@ -31,7 +33,8 @@ export const useBlockEditor = ({ article }: { article: Article }) => {
         content: JSON.stringify(editor?.getJSON()),
       },
     });
-  }, 1000);
+    setIsSaving(false);
+  }, 2000);
 
   const editor = useEditor(
     {
@@ -50,6 +53,7 @@ export const useBlockEditor = ({ article }: { article: Article }) => {
         },
       },
       onUpdate: () => {
+        setIsSaving(true);
         debouncedLog();
       },
     },

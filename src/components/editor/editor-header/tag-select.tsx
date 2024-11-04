@@ -2,10 +2,14 @@ import { useState } from "react";
 import { Badge } from "../../ui/badge";
 import { Input } from "../../ui/input";
 import { X } from "lucide-react";
+import { api } from "@/trpc/react";
+import { type Article } from "@prisma/client";
 
-export function TagSelect({ tags }: { tags: string[] }) {
-  const [selectedTags, setSelectedTags] = useState<string[]>(tags);
+export function TagSelect({ article }: { article: Article }) {
+  const [selectedTags, setSelectedTags] = useState<string[]>(article.tags);
   const [inputValue, setInputValue] = useState("");
+
+  const { mutate: updateArticle } = api.articles.update.useMutation();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if ((e.key === "Enter" || e.key === " ") && inputValue.trim()) {
@@ -13,8 +17,21 @@ export function TagSelect({ tags }: { tags: string[] }) {
       const trimmedValue = inputValue.trim();
       if (!selectedTags.includes(trimmedValue)) {
         setSelectedTags([...selectedTags, trimmedValue]);
+        setInputValue("");
+        updateArticle({
+          article: { tags: [...selectedTags, trimmedValue] },
+          articleId: article.id,
+        });
       }
-      setInputValue("");
+    } else if (
+      e.key === "Backspace" &&
+      !inputValue &&
+      selectedTags.length > 0
+    ) {
+      e.preventDefault();
+      const lastTag = selectedTags[selectedTags.length - 1];
+      setSelectedTags(selectedTags.slice(0, -1));
+      setInputValue(lastTag ?? "");
     }
   };
 
@@ -24,7 +41,7 @@ export function TagSelect({ tags }: { tags: string[] }) {
         <Badge
           onClick={() => setSelectedTags(selectedTags.filter((t) => t !== tag))}
           key={tag}
-          className="flex h-6 items-center"
+          className="flex h-6 cursor-pointer items-center"
         >
           {tag}
           <X className="ml-2 h-4 w-4" />

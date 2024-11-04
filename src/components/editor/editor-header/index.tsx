@@ -17,8 +17,8 @@ export default function EditorHeader({ article }: { article: Article }) {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-2 pb-12 pl-20 pr-8 lg:max-w-3xl">
-      <TitleInput title={article.title} />
-      <TagSelect tags={article.tags} />
+      <TitleInput article={article} />
+      <TagSelect article={article} />
     </div>
   );
 }

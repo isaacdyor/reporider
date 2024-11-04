@@ -4,7 +4,15 @@ import {
   publicProcedure,
 } from "@/server/api/trpc";
 import { z } from "node_modules/zod/lib";
-import { ArticleCreateInputSchema } from "prisma/generated/zod";
+import {
+  ArticleCreateInputSchema,
+  ArticleUpdateInputSchema,
+} from "prisma/generated/zod";
+
+const UpdateArticleInputSchema = z.object({
+  article: ArticleUpdateInputSchema,
+  articleId: z.string(),
+});
 
 export const articlesRouter = createTRPCRouter({
   create: privateProcedure
@@ -17,6 +25,16 @@ export const articlesRouter = createTRPCRouter({
         },
       });
     }),
+
+  update: privateProcedure
+    .input(UpdateArticleInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.article.update({
+        where: { id: input.articleId },
+        data: input.article,
+      });
+    }),
+
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -24,6 +42,7 @@ export const articlesRouter = createTRPCRouter({
         where: { id: input.id },
       });
     }),
+
   getAll: privateProcedure.query(async ({ ctx }) => {
     return ctx.db.article.findMany({
       where: {

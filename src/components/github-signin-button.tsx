@@ -10,7 +10,7 @@ export function GitHubSigninButton() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
-        redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/dashboard`,
+        redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback`,
       },
     });
     if (error) {

@@ -14,9 +14,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id
+  name      String?
+  email     String   @unique
+  githubInstallationId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  articles  Article[]
+}
+
 model Article {
   id        String   @id @default(uuid())
-  userId    String /// @zod.custom.omit([model, input])
+  userId    String 
+  user      User     @relation(fields: [userId], references: [id])
   title     String
   tags      String[]
   content   String

@@ -18,7 +18,7 @@ export default async function RepoPage({ params }: PageProps) {
     redirect("/signin");
   }
 
-  const octokit = await getOctokit({ pathname: `/repos/${name}` });
+  const octokit = await getOctokit();
 
   const { data: repo } = await octokit.rest.repos.get({
     owner: username,
@@ -41,8 +41,6 @@ export default async function RepoPage({ params }: PageProps) {
         .then((response) => response.data),
     ),
   );
-
-  console.log(commitsWithPatches);
 
   return (
     <DashboardContentLayout>

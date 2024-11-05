@@ -1,25 +1,41 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { api } from "@/trpc/server";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get("next") ?? "/";
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (!data.user) {
+      return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+    }
+
+    let user = await api.users.getCurrent();
+    if (!user) {
+      user = await api.users.create({
+        email: data.user.email!,
+        name: data.user.user_metadata.name as string,
+        id: "unnecessary",
+      });
+    }
+
     if (!error) {
       const forwardedHost = request.headers.get("x-forwarded-host"); // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === "development";
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+      let url: string;
+      if (isLocalEnv || !forwardedHost) {
+        url = `${origin}`;
       } else {
-        return NextResponse.redirect(`${origin}${next}`);
+        url = `https://${forwardedHost}`;
       }
+      if (!user?.githubInstallationId) {
+        return NextResponse.redirect(`${url}/github/callback`);
+      }
+      return NextResponse.redirect(`${url}`);
     }
   }
 

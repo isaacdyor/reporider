@@ -3,7 +3,7 @@ import { RepoCard } from "@/components/repo-card";
 import { getOctokit } from "@/lib/octokit";
 
 export default async function DashboardPage() {
-  const octokit = await getOctokit({ pathname: "/repos" });
+  const octokit = await getOctokit();
 
   const { data: repos } = await octokit.rest.repos.listForAuthenticatedUser({
     sort: "updated",

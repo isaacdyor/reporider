@@ -4,15 +4,11 @@ import { getSession } from "./supabase/server";
 
 let octokitInstance: Octokit | null = null;
 
-export const getOctokit = async ({ pathname }: { pathname: string }) => {
+export const getOctokit = async () => {
   const { session } = await getSession();
 
-  if (!session) {
+  if (!session?.provider_token) {
     redirect("/signin");
-  }
-
-  if (!session.provider_token) {
-    redirect(`/refresh?pathname=${pathname}`);
   }
 
   if (!octokitInstance) {

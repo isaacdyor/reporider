@@ -45,7 +45,6 @@ export const wordwareRouter = createTRPCRouter({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const json = (await response.json()) as unknown;
-      console.log(json);
       const result = responseSchema.parse(json);
       return result.outputs;
     }),

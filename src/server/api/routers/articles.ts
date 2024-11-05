@@ -21,7 +21,11 @@ export const articlesRouter = createTRPCRouter({
       return ctx.db.article.create({
         data: {
           ...input,
-          userId: ctx.user.id,
+          user: {
+            connect: {
+              id: ctx.user.id,
+            },
+          },
         },
       });
     }),

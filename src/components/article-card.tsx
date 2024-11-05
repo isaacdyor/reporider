@@ -11,7 +11,7 @@ export function ArticleCard({ article }: { article: Article }) {
       <CardContent>
         <Link
           className={buttonVariants({ variant: "outline" })}
-          href={`/editor/${article.id}`}
+          href={`/articles/${article.id}/edit`}
         >
           Edit
         </Link>

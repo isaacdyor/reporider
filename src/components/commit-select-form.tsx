@@ -33,7 +33,7 @@ export function CommitSelectForm({ commits }: CommitSelectFormProps) {
   const { mutate: createArticle, isPending: articlePending } =
     api.articles.create.useMutation({
       onSuccess: (data) => {
-        router.push(`/editor/${data.id}`);
+        router.push(`/articles/${data.id}/edit`);
       },
     });
   const { mutate: getDraft, isPending: draftPending } =

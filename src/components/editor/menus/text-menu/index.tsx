@@ -225,6 +225,15 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
             </Toolbar.Wrapper>
           </Popover.Content>
         </Popover.Root>
+        <Toolbar.Divider />
+        <MemoButton
+          tooltip="Chat"
+          tooltipShortcut={["Mod", "K"]}
+          onClick={commands.onToggleChat}
+        >
+          <Icon name="Sparkles" />
+          Chat
+        </MemoButton>
       </Toolbar.Wrapper>
     </BubbleMenu>
   );

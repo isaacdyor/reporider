@@ -1,7 +1,9 @@
 import { type Editor } from "@tiptap/react";
 import { useCallback } from "react";
-
+import { useEditorStoreActions } from "@/stores/editor-store";
 export const useTextmenuCommands = (editor: Editor) => {
+  const { setIsInlineChatOpen } = useEditorStoreActions();
+
   const onBold = useCallback(
     () => editor.chain().focus().toggleBold().run(),
     [editor],
@@ -100,6 +102,11 @@ export const useTextmenuCommands = (editor: Editor) => {
     [editor],
   );
 
+  const onToggleChat = useCallback(() => {
+    editor.chain().focus().run();
+    setIsInlineChatOpen(true);
+  }, [editor, setIsInlineChatOpen]);
+
   return {
     onBold,
     onItalic,
@@ -119,7 +126,7 @@ export const useTextmenuCommands = (editor: Editor) => {
     onClearHighlight,
     onSetFont,
     onSetFontSize,
-
     onLink,
+    onToggleChat,
   };
 };

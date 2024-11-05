@@ -18,6 +18,7 @@ import { TextMenu } from "./menus/text-menu";
 
 import "@/styles/index.css";
 import { type Article } from "@prisma/client";
+import { InlineChatMenu } from "./menus/inline-chat-menu";
 
 export const Editor = ({ article }: { article: Article }) => {
   const { editor } = useBlockEditor({ article });
@@ -37,6 +38,7 @@ export const Editor = ({ article }: { article: Article }) => {
         <TableRowMenu editor={editor} />
         <TableColumnMenu editor={editor} />
         <ImageBlockMenu editor={editor} />
+        <InlineChatMenu editor={editor} />
       </div>
     </div>
   );

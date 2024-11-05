@@ -1,20 +1,25 @@
-import { redirect } from "next/navigation";
+import { api } from "@/trpc/server";
 import { Octokit } from "octokit";
-import { getSession } from "../supabase/server";
-
-let octokitInstance: Octokit | null = null;
+import { getAccessToken } from "./get-access-token";
 
 export const getOctokit = async () => {
-  const { session } = await getSession();
+  const user = await api.users.getCurrent();
 
-  if (!session?.provider_token) {
-    redirect("/signin");
+  if (!user?.githubInstallation) {
+    throw new Error("No GitHub installation ID found");
   }
 
-  if (!octokitInstance) {
-    octokitInstance = new Octokit({
-      auth: session.provider_token,
-    });
+  let token = user.githubInstallation.accessToken;
+
+  const expiresAt = new Date(user.githubInstallation.expiresAt);
+  const tenMinutesFromNow = new Date(Date.now() + 10 * 60 * 1000);
+
+  if (expiresAt < tenMinutesFromNow) {
+    token = await getAccessToken(user.githubInstallation.installationId);
   }
-  return octokitInstance;
+
+  // Create a new instance every time to ensure we're using the current token
+  return new Octokit({
+    auth: token,
+  });
 };

@@ -47,4 +47,5 @@ export const getAccessToken = async (installationId: string) => {
       },
     },
   });
+  return token;
 };

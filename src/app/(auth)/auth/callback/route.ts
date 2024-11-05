@@ -19,6 +19,7 @@ export async function GET(request: Request) {
       await api.users.create({
         email: data.user.email!,
         name: data.user.user_metadata.name as string,
+        avatarUrl: data.user.user_metadata.avatar_url as string,
         id: "unnecessary",
       });
     }

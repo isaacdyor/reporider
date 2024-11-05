@@ -43,6 +43,7 @@ export function CommitSelectForm({ commits }: CommitSelectFormProps) {
           title: data.title,
           content: data.article,
           tags: data.tags,
+          user: {},
         });
       },
     });

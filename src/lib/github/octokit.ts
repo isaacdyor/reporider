@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Octokit } from "octokit";
-import { getSession } from "./supabase/server";
+import { getSession } from "../supabase/server";
 
 let octokitInstance: Octokit | null = null;
 

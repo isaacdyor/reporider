@@ -5,11 +5,6 @@ import {
   UserUpdateInputSchema,
 } from "prisma/generated/zod";
 
-const UpdateUserInputSchema = z.object({
-  user: UserUpdateInputSchema,
-  userId: z.string(),
-});
-
 export const usersRouter = createTRPCRouter({
   create: privateProcedure
     .input(UserCreateInputSchema)
@@ -23,11 +18,11 @@ export const usersRouter = createTRPCRouter({
     }),
 
   update: privateProcedure
-    .input(UpdateUserInputSchema)
+    .input(UserUpdateInputSchema)
     .mutation(async ({ ctx, input }) => {
       return ctx.db.user.update({
-        where: { id: input.userId },
-        data: input.user,
+        where: { id: ctx.user.id },
+        data: input,
       });
     }),
 

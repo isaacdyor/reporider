@@ -1,6 +1,6 @@
 import { DashboardContentLayout } from "@/components/dashboard-content-layout";
 import { RepoCard } from "@/components/repo-card";
-import { getOctokit } from "@/lib/octokit";
+import { getOctokit } from "@/lib/github/octokit";
 
 export default async function DashboardPage() {
   const octokit = await getOctokit();

@@ -33,7 +33,9 @@ export async function GET(request: Request) {
         url = `https://${forwardedHost}`;
       }
       if (!user?.githubInstallationId) {
-        return NextResponse.redirect(`${url}/github/callback`);
+        return NextResponse.redirect(
+          "https://github.com/apps/reporider-app/installations/new",
+        );
       }
       return NextResponse.redirect(`${url}`);
     }

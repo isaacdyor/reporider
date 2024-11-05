@@ -13,6 +13,9 @@ export const env = createEnv({
       .default("development"),
     WORDWARE_API_KEY: z.string(),
     TIPTAP_TOKEN: z.string(),
+    GITHUB_PRIVATE_KEY: z.string(),
+    GITHUB_APP_ID: z.string(),
+    GITHUB_CLIENT_ID: z.string(),
   },
 
   /**
@@ -38,6 +41,9 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     WORDWARE_API_KEY: process.env.WORDWARE_API_KEY,
     TIPTAP_TOKEN: process.env.TIPTAP_TOKEN,
+    GITHUB_PRIVATE_KEY: process.env.GITHUB_PRIVATE_KEY,
+    GITHUB_APP_ID: process.env.GITHUB_APP_ID,
+    GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

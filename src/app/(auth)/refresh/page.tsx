@@ -2,13 +2,12 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 
-export default function RefreshPage() {
+function RefreshPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = searchParams.get("pathname");
-
   const supabase = createClient();
 
   useEffect(() => {
@@ -30,4 +29,12 @@ export default function RefreshPage() {
   }, [pathname, router, supabase.auth]);
 
   return null;
+}
+
+export default function RefreshPage() {
+  return (
+    <Suspense fallback={null}>
+      <RefreshPageContent />
+    </Suspense>
+  );
 }

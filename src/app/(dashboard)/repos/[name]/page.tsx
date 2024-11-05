@@ -18,7 +18,7 @@ export default async function RepoPage({ params }: PageProps) {
     redirect("/signin");
   }
 
-  const octokit = await getOctokit();
+  const octokit = await getOctokit({ pathname: `/repos/${name}` });
 
   const { data: repo } = await octokit.rest.repos.get({
     owner: username,

@@ -12,7 +12,9 @@ import type { Prisma } from '@prisma/client';
 
 export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
 
-export const UserScalarFieldEnumSchema = z.enum(['id','name','email','githubInstallationId','createdAt','updatedAt']);
+export const UserScalarFieldEnumSchema = z.enum(['id','name','email','createdAt','updatedAt']);
+
+export const GithubInstallationScalarFieldEnumSchema = z.enum(['id','installationId','accessToken','expiresAt','createdAt','userId']);
 
 export const ArticleScalarFieldEnumSchema = z.enum(['id','userId','title','tags','content','createdAt','updatedAt']);
 
@@ -33,12 +35,26 @@ export const UserSchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
   email: z.string(),
-  githubInstallationId: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 })
 
 export type User = z.infer<typeof UserSchema>
+
+/////////////////////////////////////////
+// GITHUB INSTALLATION SCHEMA
+/////////////////////////////////////////
+
+export const GithubInstallationSchema = z.object({
+  id: z.string(),
+  installationId: z.string(),
+  accessToken: z.string(),
+  expiresAt: z.coerce.date(),
+  createdAt: z.coerce.date(),
+  userId: z.string(),
+})
+
+export type GithubInstallation = z.infer<typeof GithubInstallationSchema>
 
 /////////////////////////////////////////
 // ARTICLE SCHEMA
@@ -65,6 +81,7 @@ export type Article = z.infer<typeof ArticleSchema>
 
 export const UserIncludeSchema: z.ZodType<Prisma.UserInclude> = z.object({
   articles: z.union([z.boolean(),z.lazy(() => ArticleFindManyArgsSchema)]).optional(),
+  githubInstallation: z.union([z.boolean(),z.lazy(() => GithubInstallationArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => UserCountOutputTypeArgsSchema)]).optional(),
 }).strict()
 
@@ -85,11 +102,33 @@ export const UserSelectSchema: z.ZodType<Prisma.UserSelect> = z.object({
   id: z.boolean().optional(),
   name: z.boolean().optional(),
   email: z.boolean().optional(),
-  githubInstallationId: z.boolean().optional(),
   createdAt: z.boolean().optional(),
   updatedAt: z.boolean().optional(),
   articles: z.union([z.boolean(),z.lazy(() => ArticleFindManyArgsSchema)]).optional(),
+  githubInstallation: z.union([z.boolean(),z.lazy(() => GithubInstallationArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => UserCountOutputTypeArgsSchema)]).optional(),
+}).strict()
+
+// GITHUB INSTALLATION
+//------------------------------------------------------
+
+export const GithubInstallationIncludeSchema: z.ZodType<Prisma.GithubInstallationInclude> = z.object({
+  user: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
+}).strict()
+
+export const GithubInstallationArgsSchema: z.ZodType<Prisma.GithubInstallationDefaultArgs> = z.object({
+  select: z.lazy(() => GithubInstallationSelectSchema).optional(),
+  include: z.lazy(() => GithubInstallationIncludeSchema).optional(),
+}).strict();
+
+export const GithubInstallationSelectSchema: z.ZodType<Prisma.GithubInstallationSelect> = z.object({
+  id: z.boolean().optional(),
+  installationId: z.boolean().optional(),
+  accessToken: z.boolean().optional(),
+  expiresAt: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  userId: z.boolean().optional(),
+  user: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
 }).strict()
 
 // ARTICLE
@@ -127,20 +166,20 @@ export const UserWhereInputSchema: z.ZodType<Prisma.UserWhereInput> = z.object({
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   email: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  githubInstallationId: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
-  articles: z.lazy(() => ArticleListRelationFilterSchema).optional()
+  articles: z.lazy(() => ArticleListRelationFilterSchema).optional(),
+  githubInstallation: z.union([ z.lazy(() => GithubInstallationNullableRelationFilterSchema),z.lazy(() => GithubInstallationWhereInputSchema) ]).optional().nullable(),
 }).strict();
 
 export const UserOrderByWithRelationInputSchema: z.ZodType<Prisma.UserOrderByWithRelationInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   name: z.union([ z.lazy(() => SortOrderSchema),z.lazy(() => SortOrderInputSchema) ]).optional(),
   email: z.lazy(() => SortOrderSchema).optional(),
-  githubInstallationId: z.union([ z.lazy(() => SortOrderSchema),z.lazy(() => SortOrderInputSchema) ]).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
-  articles: z.lazy(() => ArticleOrderByRelationAggregateInputSchema).optional()
+  articles: z.lazy(() => ArticleOrderByRelationAggregateInputSchema).optional(),
+  githubInstallation: z.lazy(() => GithubInstallationOrderByWithRelationInputSchema).optional()
 }).strict();
 
 export const UserWhereUniqueInputSchema: z.ZodType<Prisma.UserWhereUniqueInput> = z.union([
@@ -162,17 +201,16 @@ export const UserWhereUniqueInputSchema: z.ZodType<Prisma.UserWhereUniqueInput> 
   OR: z.lazy(() => UserWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => UserWhereInputSchema),z.lazy(() => UserWhereInputSchema).array() ]).optional(),
   name: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
-  githubInstallationId: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
-  articles: z.lazy(() => ArticleListRelationFilterSchema).optional()
+  articles: z.lazy(() => ArticleListRelationFilterSchema).optional(),
+  githubInstallation: z.union([ z.lazy(() => GithubInstallationNullableRelationFilterSchema),z.lazy(() => GithubInstallationWhereInputSchema) ]).optional().nullable(),
 }).strict());
 
 export const UserOrderByWithAggregationInputSchema: z.ZodType<Prisma.UserOrderByWithAggregationInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
   name: z.union([ z.lazy(() => SortOrderSchema),z.lazy(() => SortOrderInputSchema) ]).optional(),
   email: z.lazy(() => SortOrderSchema).optional(),
-  githubInstallationId: z.union([ z.lazy(() => SortOrderSchema),z.lazy(() => SortOrderInputSchema) ]).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   _count: z.lazy(() => UserCountOrderByAggregateInputSchema).optional(),
@@ -187,9 +225,96 @@ export const UserScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.UserScal
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
   email: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
-  githubInstallationId: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
   createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
+}).strict();
+
+export const GithubInstallationWhereInputSchema: z.ZodType<Prisma.GithubInstallationWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => GithubInstallationWhereInputSchema),z.lazy(() => GithubInstallationWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => GithubInstallationWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => GithubInstallationWhereInputSchema),z.lazy(() => GithubInstallationWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  installationId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  accessToken: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  expiresAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+  userId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  user: z.union([ z.lazy(() => UserRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
+}).strict();
+
+export const GithubInstallationOrderByWithRelationInputSchema: z.ZodType<Prisma.GithubInstallationOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  installationId: z.lazy(() => SortOrderSchema).optional(),
+  accessToken: z.lazy(() => SortOrderSchema).optional(),
+  expiresAt: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  userId: z.lazy(() => SortOrderSchema).optional(),
+  user: z.lazy(() => UserOrderByWithRelationInputSchema).optional()
+}).strict();
+
+export const GithubInstallationWhereUniqueInputSchema: z.ZodType<Prisma.GithubInstallationWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string(),
+    installationId: z.string(),
+    userId: z.string()
+  }),
+  z.object({
+    id: z.string(),
+    installationId: z.string(),
+  }),
+  z.object({
+    id: z.string(),
+    userId: z.string(),
+  }),
+  z.object({
+    id: z.string(),
+  }),
+  z.object({
+    installationId: z.string(),
+    userId: z.string(),
+  }),
+  z.object({
+    installationId: z.string(),
+  }),
+  z.object({
+    userId: z.string(),
+  }),
+])
+.and(z.object({
+  id: z.string().optional(),
+  installationId: z.string().optional(),
+  userId: z.string().optional(),
+  AND: z.union([ z.lazy(() => GithubInstallationWhereInputSchema),z.lazy(() => GithubInstallationWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => GithubInstallationWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => GithubInstallationWhereInputSchema),z.lazy(() => GithubInstallationWhereInputSchema).array() ]).optional(),
+  accessToken: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  expiresAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+  user: z.union([ z.lazy(() => UserRelationFilterSchema),z.lazy(() => UserWhereInputSchema) ]).optional(),
+}).strict());
+
+export const GithubInstallationOrderByWithAggregationInputSchema: z.ZodType<Prisma.GithubInstallationOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  installationId: z.lazy(() => SortOrderSchema).optional(),
+  accessToken: z.lazy(() => SortOrderSchema).optional(),
+  expiresAt: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  userId: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => GithubInstallationCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => GithubInstallationMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => GithubInstallationMinOrderByAggregateInputSchema).optional()
+}).strict();
+
+export const GithubInstallationScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.GithubInstallationScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => GithubInstallationScalarWhereWithAggregatesInputSchema),z.lazy(() => GithubInstallationScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => GithubInstallationScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => GithubInstallationScalarWhereWithAggregatesInputSchema),z.lazy(() => GithubInstallationScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  installationId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  accessToken: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  expiresAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
+  userId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
 }).strict();
 
 export const ArticleWhereInputSchema: z.ZodType<Prisma.ArticleWhereInput> = z.object({
@@ -264,47 +389,46 @@ export const UserCreateInputSchema: z.ZodType<Prisma.UserCreateInput> = z.object
   id: z.string(),
   name: z.string().optional().nullable(),
   email: z.string(),
-  githubInstallationId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  articles: z.lazy(() => ArticleCreateNestedManyWithoutUserInputSchema).optional()
+  articles: z.lazy(() => ArticleCreateNestedManyWithoutUserInputSchema).optional(),
+  githubInstallation: z.lazy(() => GithubInstallationCreateNestedOneWithoutUserInputSchema).optional()
 }).strict();
 
 export const UserUncheckedCreateInputSchema: z.ZodType<Prisma.UserUncheckedCreateInput> = z.object({
   id: z.string(),
   name: z.string().optional().nullable(),
   email: z.string(),
-  githubInstallationId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  articles: z.lazy(() => ArticleUncheckedCreateNestedManyWithoutUserInputSchema).optional()
+  articles: z.lazy(() => ArticleUncheckedCreateNestedManyWithoutUserInputSchema).optional(),
+  githubInstallation: z.lazy(() => GithubInstallationUncheckedCreateNestedOneWithoutUserInputSchema).optional()
 }).strict();
 
 export const UserUpdateInputSchema: z.ZodType<Prisma.UserUpdateInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  githubInstallationId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  articles: z.lazy(() => ArticleUpdateManyWithoutUserNestedInputSchema).optional()
+  articles: z.lazy(() => ArticleUpdateManyWithoutUserNestedInputSchema).optional(),
+  githubInstallation: z.lazy(() => GithubInstallationUpdateOneWithoutUserNestedInputSchema).optional()
 }).strict();
 
 export const UserUncheckedUpdateInputSchema: z.ZodType<Prisma.UserUncheckedUpdateInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  githubInstallationId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  articles: z.lazy(() => ArticleUncheckedUpdateManyWithoutUserNestedInputSchema).optional()
+  articles: z.lazy(() => ArticleUncheckedUpdateManyWithoutUserNestedInputSchema).optional(),
+  githubInstallation: z.lazy(() => GithubInstallationUncheckedUpdateOneWithoutUserNestedInputSchema).optional()
 }).strict();
 
 export const UserCreateManyInputSchema: z.ZodType<Prisma.UserCreateManyInput> = z.object({
   id: z.string(),
   name: z.string().optional().nullable(),
   email: z.string(),
-  githubInstallationId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional()
 }).strict();
@@ -313,7 +437,6 @@ export const UserUpdateManyMutationInputSchema: z.ZodType<Prisma.UserUpdateManyM
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  githubInstallationId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
@@ -322,9 +445,70 @@ export const UserUncheckedUpdateManyInputSchema: z.ZodType<Prisma.UserUncheckedU
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  githubInstallationId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const GithubInstallationCreateInputSchema: z.ZodType<Prisma.GithubInstallationCreateInput> = z.object({
+  id: z.string().optional(),
+  installationId: z.string(),
+  accessToken: z.string(),
+  expiresAt: z.coerce.date(),
+  createdAt: z.coerce.date().optional(),
+  user: z.lazy(() => UserCreateNestedOneWithoutGithubInstallationInputSchema)
+}).strict();
+
+export const GithubInstallationUncheckedCreateInputSchema: z.ZodType<Prisma.GithubInstallationUncheckedCreateInput> = z.object({
+  id: z.string().optional(),
+  installationId: z.string(),
+  accessToken: z.string(),
+  expiresAt: z.coerce.date(),
+  createdAt: z.coerce.date().optional(),
+  userId: z.string()
+}).strict();
+
+export const GithubInstallationUpdateInputSchema: z.ZodType<Prisma.GithubInstallationUpdateInput> = z.object({
+  id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  installationId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  accessToken: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  expiresAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  user: z.lazy(() => UserUpdateOneRequiredWithoutGithubInstallationNestedInputSchema).optional()
+}).strict();
+
+export const GithubInstallationUncheckedUpdateInputSchema: z.ZodType<Prisma.GithubInstallationUncheckedUpdateInput> = z.object({
+  id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  installationId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  accessToken: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  expiresAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const GithubInstallationCreateManyInputSchema: z.ZodType<Prisma.GithubInstallationCreateManyInput> = z.object({
+  id: z.string().optional(),
+  installationId: z.string(),
+  accessToken: z.string(),
+  expiresAt: z.coerce.date(),
+  createdAt: z.coerce.date().optional(),
+  userId: z.string()
+}).strict();
+
+export const GithubInstallationUpdateManyMutationInputSchema: z.ZodType<Prisma.GithubInstallationUpdateManyMutationInput> = z.object({
+  id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  installationId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  accessToken: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  expiresAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const GithubInstallationUncheckedUpdateManyInputSchema: z.ZodType<Prisma.GithubInstallationUncheckedUpdateManyInput> = z.object({
+  id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  installationId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  accessToken: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  expiresAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  userId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const ArticleCreateInputSchema: z.ZodType<Prisma.ArticleCreateInput> = z.object({
@@ -443,6 +627,11 @@ export const ArticleListRelationFilterSchema: z.ZodType<Prisma.ArticleListRelati
   none: z.lazy(() => ArticleWhereInputSchema).optional()
 }).strict();
 
+export const GithubInstallationNullableRelationFilterSchema: z.ZodType<Prisma.GithubInstallationNullableRelationFilter> = z.object({
+  is: z.lazy(() => GithubInstallationWhereInputSchema).optional().nullable(),
+  isNot: z.lazy(() => GithubInstallationWhereInputSchema).optional().nullable()
+}).strict();
+
 export const SortOrderInputSchema: z.ZodType<Prisma.SortOrderInput> = z.object({
   sort: z.lazy(() => SortOrderSchema),
   nulls: z.lazy(() => NullsOrderSchema).optional()
@@ -456,7 +645,6 @@ export const UserCountOrderByAggregateInputSchema: z.ZodType<Prisma.UserCountOrd
   id: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   email: z.lazy(() => SortOrderSchema).optional(),
-  githubInstallationId: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
@@ -465,7 +653,6 @@ export const UserMaxOrderByAggregateInputSchema: z.ZodType<Prisma.UserMaxOrderBy
   id: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   email: z.lazy(() => SortOrderSchema).optional(),
-  githubInstallationId: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
@@ -474,7 +661,6 @@ export const UserMinOrderByAggregateInputSchema: z.ZodType<Prisma.UserMinOrderBy
   id: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   email: z.lazy(() => SortOrderSchema).optional(),
-  githubInstallationId: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
@@ -529,17 +715,44 @@ export const DateTimeWithAggregatesFilterSchema: z.ZodType<Prisma.DateTimeWithAg
   _max: z.lazy(() => NestedDateTimeFilterSchema).optional()
 }).strict();
 
+export const UserRelationFilterSchema: z.ZodType<Prisma.UserRelationFilter> = z.object({
+  is: z.lazy(() => UserWhereInputSchema).optional(),
+  isNot: z.lazy(() => UserWhereInputSchema).optional()
+}).strict();
+
+export const GithubInstallationCountOrderByAggregateInputSchema: z.ZodType<Prisma.GithubInstallationCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  installationId: z.lazy(() => SortOrderSchema).optional(),
+  accessToken: z.lazy(() => SortOrderSchema).optional(),
+  expiresAt: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  userId: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const GithubInstallationMaxOrderByAggregateInputSchema: z.ZodType<Prisma.GithubInstallationMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  installationId: z.lazy(() => SortOrderSchema).optional(),
+  accessToken: z.lazy(() => SortOrderSchema).optional(),
+  expiresAt: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  userId: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const GithubInstallationMinOrderByAggregateInputSchema: z.ZodType<Prisma.GithubInstallationMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  installationId: z.lazy(() => SortOrderSchema).optional(),
+  accessToken: z.lazy(() => SortOrderSchema).optional(),
+  expiresAt: z.lazy(() => SortOrderSchema).optional(),
+  createdAt: z.lazy(() => SortOrderSchema).optional(),
+  userId: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
 export const StringNullableListFilterSchema: z.ZodType<Prisma.StringNullableListFilter> = z.object({
   equals: z.string().array().optional().nullable(),
   has: z.string().optional().nullable(),
   hasEvery: z.string().array().optional(),
   hasSome: z.string().array().optional(),
   isEmpty: z.boolean().optional()
-}).strict();
-
-export const UserRelationFilterSchema: z.ZodType<Prisma.UserRelationFilter> = z.object({
-  is: z.lazy(() => UserWhereInputSchema).optional(),
-  isNot: z.lazy(() => UserWhereInputSchema).optional()
 }).strict();
 
 export const ArticleCountOrderByAggregateInputSchema: z.ZodType<Prisma.ArticleCountOrderByAggregateInput> = z.object({
@@ -577,11 +790,23 @@ export const ArticleCreateNestedManyWithoutUserInputSchema: z.ZodType<Prisma.Art
   connect: z.union([ z.lazy(() => ArticleWhereUniqueInputSchema),z.lazy(() => ArticleWhereUniqueInputSchema).array() ]).optional(),
 }).strict();
 
+export const GithubInstallationCreateNestedOneWithoutUserInputSchema: z.ZodType<Prisma.GithubInstallationCreateNestedOneWithoutUserInput> = z.object({
+  create: z.union([ z.lazy(() => GithubInstallationCreateWithoutUserInputSchema),z.lazy(() => GithubInstallationUncheckedCreateWithoutUserInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => GithubInstallationCreateOrConnectWithoutUserInputSchema).optional(),
+  connect: z.lazy(() => GithubInstallationWhereUniqueInputSchema).optional()
+}).strict();
+
 export const ArticleUncheckedCreateNestedManyWithoutUserInputSchema: z.ZodType<Prisma.ArticleUncheckedCreateNestedManyWithoutUserInput> = z.object({
   create: z.union([ z.lazy(() => ArticleCreateWithoutUserInputSchema),z.lazy(() => ArticleCreateWithoutUserInputSchema).array(),z.lazy(() => ArticleUncheckedCreateWithoutUserInputSchema),z.lazy(() => ArticleUncheckedCreateWithoutUserInputSchema).array() ]).optional(),
   connectOrCreate: z.union([ z.lazy(() => ArticleCreateOrConnectWithoutUserInputSchema),z.lazy(() => ArticleCreateOrConnectWithoutUserInputSchema).array() ]).optional(),
   createMany: z.lazy(() => ArticleCreateManyUserInputEnvelopeSchema).optional(),
   connect: z.union([ z.lazy(() => ArticleWhereUniqueInputSchema),z.lazy(() => ArticleWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const GithubInstallationUncheckedCreateNestedOneWithoutUserInputSchema: z.ZodType<Prisma.GithubInstallationUncheckedCreateNestedOneWithoutUserInput> = z.object({
+  create: z.union([ z.lazy(() => GithubInstallationCreateWithoutUserInputSchema),z.lazy(() => GithubInstallationUncheckedCreateWithoutUserInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => GithubInstallationCreateOrConnectWithoutUserInputSchema).optional(),
+  connect: z.lazy(() => GithubInstallationWhereUniqueInputSchema).optional()
 }).strict();
 
 export const StringFieldUpdateOperationsInputSchema: z.ZodType<Prisma.StringFieldUpdateOperationsInput> = z.object({
@@ -610,6 +835,16 @@ export const ArticleUpdateManyWithoutUserNestedInputSchema: z.ZodType<Prisma.Art
   deleteMany: z.union([ z.lazy(() => ArticleScalarWhereInputSchema),z.lazy(() => ArticleScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
+export const GithubInstallationUpdateOneWithoutUserNestedInputSchema: z.ZodType<Prisma.GithubInstallationUpdateOneWithoutUserNestedInput> = z.object({
+  create: z.union([ z.lazy(() => GithubInstallationCreateWithoutUserInputSchema),z.lazy(() => GithubInstallationUncheckedCreateWithoutUserInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => GithubInstallationCreateOrConnectWithoutUserInputSchema).optional(),
+  upsert: z.lazy(() => GithubInstallationUpsertWithoutUserInputSchema).optional(),
+  disconnect: z.union([ z.boolean(),z.lazy(() => GithubInstallationWhereInputSchema) ]).optional(),
+  delete: z.union([ z.boolean(),z.lazy(() => GithubInstallationWhereInputSchema) ]).optional(),
+  connect: z.lazy(() => GithubInstallationWhereUniqueInputSchema).optional(),
+  update: z.union([ z.lazy(() => GithubInstallationUpdateToOneWithWhereWithoutUserInputSchema),z.lazy(() => GithubInstallationUpdateWithoutUserInputSchema),z.lazy(() => GithubInstallationUncheckedUpdateWithoutUserInputSchema) ]).optional(),
+}).strict();
+
 export const ArticleUncheckedUpdateManyWithoutUserNestedInputSchema: z.ZodType<Prisma.ArticleUncheckedUpdateManyWithoutUserNestedInput> = z.object({
   create: z.union([ z.lazy(() => ArticleCreateWithoutUserInputSchema),z.lazy(() => ArticleCreateWithoutUserInputSchema).array(),z.lazy(() => ArticleUncheckedCreateWithoutUserInputSchema),z.lazy(() => ArticleUncheckedCreateWithoutUserInputSchema).array() ]).optional(),
   connectOrCreate: z.union([ z.lazy(() => ArticleCreateOrConnectWithoutUserInputSchema),z.lazy(() => ArticleCreateOrConnectWithoutUserInputSchema).array() ]).optional(),
@@ -622,6 +857,30 @@ export const ArticleUncheckedUpdateManyWithoutUserNestedInputSchema: z.ZodType<P
   update: z.union([ z.lazy(() => ArticleUpdateWithWhereUniqueWithoutUserInputSchema),z.lazy(() => ArticleUpdateWithWhereUniqueWithoutUserInputSchema).array() ]).optional(),
   updateMany: z.union([ z.lazy(() => ArticleUpdateManyWithWhereWithoutUserInputSchema),z.lazy(() => ArticleUpdateManyWithWhereWithoutUserInputSchema).array() ]).optional(),
   deleteMany: z.union([ z.lazy(() => ArticleScalarWhereInputSchema),z.lazy(() => ArticleScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const GithubInstallationUncheckedUpdateOneWithoutUserNestedInputSchema: z.ZodType<Prisma.GithubInstallationUncheckedUpdateOneWithoutUserNestedInput> = z.object({
+  create: z.union([ z.lazy(() => GithubInstallationCreateWithoutUserInputSchema),z.lazy(() => GithubInstallationUncheckedCreateWithoutUserInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => GithubInstallationCreateOrConnectWithoutUserInputSchema).optional(),
+  upsert: z.lazy(() => GithubInstallationUpsertWithoutUserInputSchema).optional(),
+  disconnect: z.union([ z.boolean(),z.lazy(() => GithubInstallationWhereInputSchema) ]).optional(),
+  delete: z.union([ z.boolean(),z.lazy(() => GithubInstallationWhereInputSchema) ]).optional(),
+  connect: z.lazy(() => GithubInstallationWhereUniqueInputSchema).optional(),
+  update: z.union([ z.lazy(() => GithubInstallationUpdateToOneWithWhereWithoutUserInputSchema),z.lazy(() => GithubInstallationUpdateWithoutUserInputSchema),z.lazy(() => GithubInstallationUncheckedUpdateWithoutUserInputSchema) ]).optional(),
+}).strict();
+
+export const UserCreateNestedOneWithoutGithubInstallationInputSchema: z.ZodType<Prisma.UserCreateNestedOneWithoutGithubInstallationInput> = z.object({
+  create: z.union([ z.lazy(() => UserCreateWithoutGithubInstallationInputSchema),z.lazy(() => UserUncheckedCreateWithoutGithubInstallationInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => UserCreateOrConnectWithoutGithubInstallationInputSchema).optional(),
+  connect: z.lazy(() => UserWhereUniqueInputSchema).optional()
+}).strict();
+
+export const UserUpdateOneRequiredWithoutGithubInstallationNestedInputSchema: z.ZodType<Prisma.UserUpdateOneRequiredWithoutGithubInstallationNestedInput> = z.object({
+  create: z.union([ z.lazy(() => UserCreateWithoutGithubInstallationInputSchema),z.lazy(() => UserUncheckedCreateWithoutGithubInstallationInputSchema) ]).optional(),
+  connectOrCreate: z.lazy(() => UserCreateOrConnectWithoutGithubInstallationInputSchema).optional(),
+  upsert: z.lazy(() => UserUpsertWithoutGithubInstallationInputSchema).optional(),
+  connect: z.lazy(() => UserWhereUniqueInputSchema).optional(),
+  update: z.union([ z.lazy(() => UserUpdateToOneWithWhereWithoutGithubInstallationInputSchema),z.lazy(() => UserUpdateWithoutGithubInstallationInputSchema),z.lazy(() => UserUncheckedUpdateWithoutGithubInstallationInputSchema) ]).optional(),
 }).strict();
 
 export const ArticleCreatetagsInputSchema: z.ZodType<Prisma.ArticleCreatetagsInput> = z.object({
@@ -784,6 +1043,27 @@ export const ArticleCreateManyUserInputEnvelopeSchema: z.ZodType<Prisma.ArticleC
   skipDuplicates: z.boolean().optional()
 }).strict();
 
+export const GithubInstallationCreateWithoutUserInputSchema: z.ZodType<Prisma.GithubInstallationCreateWithoutUserInput> = z.object({
+  id: z.string().optional(),
+  installationId: z.string(),
+  accessToken: z.string(),
+  expiresAt: z.coerce.date(),
+  createdAt: z.coerce.date().optional()
+}).strict();
+
+export const GithubInstallationUncheckedCreateWithoutUserInputSchema: z.ZodType<Prisma.GithubInstallationUncheckedCreateWithoutUserInput> = z.object({
+  id: z.string().optional(),
+  installationId: z.string(),
+  accessToken: z.string(),
+  expiresAt: z.coerce.date(),
+  createdAt: z.coerce.date().optional()
+}).strict();
+
+export const GithubInstallationCreateOrConnectWithoutUserInputSchema: z.ZodType<Prisma.GithubInstallationCreateOrConnectWithoutUserInput> = z.object({
+  where: z.lazy(() => GithubInstallationWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => GithubInstallationCreateWithoutUserInputSchema),z.lazy(() => GithubInstallationUncheckedCreateWithoutUserInputSchema) ]),
+}).strict();
+
 export const ArticleUpsertWithWhereUniqueWithoutUserInputSchema: z.ZodType<Prisma.ArticleUpsertWithWhereUniqueWithoutUserInput> = z.object({
   where: z.lazy(() => ArticleWhereUniqueInputSchema),
   update: z.union([ z.lazy(() => ArticleUpdateWithoutUserInputSchema),z.lazy(() => ArticleUncheckedUpdateWithoutUserInputSchema) ]),
@@ -813,22 +1093,101 @@ export const ArticleScalarWhereInputSchema: z.ZodType<Prisma.ArticleScalarWhereI
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
 }).strict();
 
+export const GithubInstallationUpsertWithoutUserInputSchema: z.ZodType<Prisma.GithubInstallationUpsertWithoutUserInput> = z.object({
+  update: z.union([ z.lazy(() => GithubInstallationUpdateWithoutUserInputSchema),z.lazy(() => GithubInstallationUncheckedUpdateWithoutUserInputSchema) ]),
+  create: z.union([ z.lazy(() => GithubInstallationCreateWithoutUserInputSchema),z.lazy(() => GithubInstallationUncheckedCreateWithoutUserInputSchema) ]),
+  where: z.lazy(() => GithubInstallationWhereInputSchema).optional()
+}).strict();
+
+export const GithubInstallationUpdateToOneWithWhereWithoutUserInputSchema: z.ZodType<Prisma.GithubInstallationUpdateToOneWithWhereWithoutUserInput> = z.object({
+  where: z.lazy(() => GithubInstallationWhereInputSchema).optional(),
+  data: z.union([ z.lazy(() => GithubInstallationUpdateWithoutUserInputSchema),z.lazy(() => GithubInstallationUncheckedUpdateWithoutUserInputSchema) ]),
+}).strict();
+
+export const GithubInstallationUpdateWithoutUserInputSchema: z.ZodType<Prisma.GithubInstallationUpdateWithoutUserInput> = z.object({
+  id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  installationId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  accessToken: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  expiresAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const GithubInstallationUncheckedUpdateWithoutUserInputSchema: z.ZodType<Prisma.GithubInstallationUncheckedUpdateWithoutUserInput> = z.object({
+  id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  installationId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  accessToken: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  expiresAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const UserCreateWithoutGithubInstallationInputSchema: z.ZodType<Prisma.UserCreateWithoutGithubInstallationInput> = z.object({
+  id: z.string(),
+  name: z.string().optional().nullable(),
+  email: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  articles: z.lazy(() => ArticleCreateNestedManyWithoutUserInputSchema).optional()
+}).strict();
+
+export const UserUncheckedCreateWithoutGithubInstallationInputSchema: z.ZodType<Prisma.UserUncheckedCreateWithoutGithubInstallationInput> = z.object({
+  id: z.string(),
+  name: z.string().optional().nullable(),
+  email: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  articles: z.lazy(() => ArticleUncheckedCreateNestedManyWithoutUserInputSchema).optional()
+}).strict();
+
+export const UserCreateOrConnectWithoutGithubInstallationInputSchema: z.ZodType<Prisma.UserCreateOrConnectWithoutGithubInstallationInput> = z.object({
+  where: z.lazy(() => UserWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => UserCreateWithoutGithubInstallationInputSchema),z.lazy(() => UserUncheckedCreateWithoutGithubInstallationInputSchema) ]),
+}).strict();
+
+export const UserUpsertWithoutGithubInstallationInputSchema: z.ZodType<Prisma.UserUpsertWithoutGithubInstallationInput> = z.object({
+  update: z.union([ z.lazy(() => UserUpdateWithoutGithubInstallationInputSchema),z.lazy(() => UserUncheckedUpdateWithoutGithubInstallationInputSchema) ]),
+  create: z.union([ z.lazy(() => UserCreateWithoutGithubInstallationInputSchema),z.lazy(() => UserUncheckedCreateWithoutGithubInstallationInputSchema) ]),
+  where: z.lazy(() => UserWhereInputSchema).optional()
+}).strict();
+
+export const UserUpdateToOneWithWhereWithoutGithubInstallationInputSchema: z.ZodType<Prisma.UserUpdateToOneWithWhereWithoutGithubInstallationInput> = z.object({
+  where: z.lazy(() => UserWhereInputSchema).optional(),
+  data: z.union([ z.lazy(() => UserUpdateWithoutGithubInstallationInputSchema),z.lazy(() => UserUncheckedUpdateWithoutGithubInstallationInputSchema) ]),
+}).strict();
+
+export const UserUpdateWithoutGithubInstallationInputSchema: z.ZodType<Prisma.UserUpdateWithoutGithubInstallationInput> = z.object({
+  id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  articles: z.lazy(() => ArticleUpdateManyWithoutUserNestedInputSchema).optional()
+}).strict();
+
+export const UserUncheckedUpdateWithoutGithubInstallationInputSchema: z.ZodType<Prisma.UserUncheckedUpdateWithoutGithubInstallationInput> = z.object({
+  id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  articles: z.lazy(() => ArticleUncheckedUpdateManyWithoutUserNestedInputSchema).optional()
+}).strict();
+
 export const UserCreateWithoutArticlesInputSchema: z.ZodType<Prisma.UserCreateWithoutArticlesInput> = z.object({
   id: z.string(),
   name: z.string().optional().nullable(),
   email: z.string(),
-  githubInstallationId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional()
+  updatedAt: z.coerce.date().optional(),
+  githubInstallation: z.lazy(() => GithubInstallationCreateNestedOneWithoutUserInputSchema).optional()
 }).strict();
 
 export const UserUncheckedCreateWithoutArticlesInputSchema: z.ZodType<Prisma.UserUncheckedCreateWithoutArticlesInput> = z.object({
   id: z.string(),
   name: z.string().optional().nullable(),
   email: z.string(),
-  githubInstallationId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional()
+  updatedAt: z.coerce.date().optional(),
+  githubInstallation: z.lazy(() => GithubInstallationUncheckedCreateNestedOneWithoutUserInputSchema).optional()
 }).strict();
 
 export const UserCreateOrConnectWithoutArticlesInputSchema: z.ZodType<Prisma.UserCreateOrConnectWithoutArticlesInput> = z.object({
@@ -851,18 +1210,18 @@ export const UserUpdateWithoutArticlesInputSchema: z.ZodType<Prisma.UserUpdateWi
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  githubInstallationId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  githubInstallation: z.lazy(() => GithubInstallationUpdateOneWithoutUserNestedInputSchema).optional()
 }).strict();
 
 export const UserUncheckedUpdateWithoutArticlesInputSchema: z.ZodType<Prisma.UserUncheckedUpdateWithoutArticlesInput> = z.object({
   id: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   email: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  githubInstallationId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  githubInstallation: z.lazy(() => GithubInstallationUncheckedUpdateOneWithoutUserNestedInputSchema).optional()
 }).strict();
 
 export const ArticleCreateManyUserInputSchema: z.ZodType<Prisma.ArticleCreateManyUserInput> = z.object({
@@ -965,6 +1324,68 @@ export const UserFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.UserFindUniqueOrT
   select: UserSelectSchema.optional(),
   include: UserIncludeSchema.optional(),
   where: UserWhereUniqueInputSchema,
+}).strict() ;
+
+export const GithubInstallationFindFirstArgsSchema: z.ZodType<Prisma.GithubInstallationFindFirstArgs> = z.object({
+  select: GithubInstallationSelectSchema.optional(),
+  include: GithubInstallationIncludeSchema.optional(),
+  where: GithubInstallationWhereInputSchema.optional(),
+  orderBy: z.union([ GithubInstallationOrderByWithRelationInputSchema.array(),GithubInstallationOrderByWithRelationInputSchema ]).optional(),
+  cursor: GithubInstallationWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ GithubInstallationScalarFieldEnumSchema,GithubInstallationScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const GithubInstallationFindFirstOrThrowArgsSchema: z.ZodType<Prisma.GithubInstallationFindFirstOrThrowArgs> = z.object({
+  select: GithubInstallationSelectSchema.optional(),
+  include: GithubInstallationIncludeSchema.optional(),
+  where: GithubInstallationWhereInputSchema.optional(),
+  orderBy: z.union([ GithubInstallationOrderByWithRelationInputSchema.array(),GithubInstallationOrderByWithRelationInputSchema ]).optional(),
+  cursor: GithubInstallationWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ GithubInstallationScalarFieldEnumSchema,GithubInstallationScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const GithubInstallationFindManyArgsSchema: z.ZodType<Prisma.GithubInstallationFindManyArgs> = z.object({
+  select: GithubInstallationSelectSchema.optional(),
+  include: GithubInstallationIncludeSchema.optional(),
+  where: GithubInstallationWhereInputSchema.optional(),
+  orderBy: z.union([ GithubInstallationOrderByWithRelationInputSchema.array(),GithubInstallationOrderByWithRelationInputSchema ]).optional(),
+  cursor: GithubInstallationWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ GithubInstallationScalarFieldEnumSchema,GithubInstallationScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const GithubInstallationAggregateArgsSchema: z.ZodType<Prisma.GithubInstallationAggregateArgs> = z.object({
+  where: GithubInstallationWhereInputSchema.optional(),
+  orderBy: z.union([ GithubInstallationOrderByWithRelationInputSchema.array(),GithubInstallationOrderByWithRelationInputSchema ]).optional(),
+  cursor: GithubInstallationWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict() ;
+
+export const GithubInstallationGroupByArgsSchema: z.ZodType<Prisma.GithubInstallationGroupByArgs> = z.object({
+  where: GithubInstallationWhereInputSchema.optional(),
+  orderBy: z.union([ GithubInstallationOrderByWithAggregationInputSchema.array(),GithubInstallationOrderByWithAggregationInputSchema ]).optional(),
+  by: GithubInstallationScalarFieldEnumSchema.array(),
+  having: GithubInstallationScalarWhereWithAggregatesInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict() ;
+
+export const GithubInstallationFindUniqueArgsSchema: z.ZodType<Prisma.GithubInstallationFindUniqueArgs> = z.object({
+  select: GithubInstallationSelectSchema.optional(),
+  include: GithubInstallationIncludeSchema.optional(),
+  where: GithubInstallationWhereUniqueInputSchema,
+}).strict() ;
+
+export const GithubInstallationFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.GithubInstallationFindUniqueOrThrowArgs> = z.object({
+  select: GithubInstallationSelectSchema.optional(),
+  include: GithubInstallationIncludeSchema.optional(),
+  where: GithubInstallationWhereUniqueInputSchema,
 }).strict() ;
 
 export const ArticleFindFirstArgsSchema: z.ZodType<Prisma.ArticleFindFirstArgs> = z.object({
@@ -1073,6 +1494,52 @@ export const UserUpdateManyArgsSchema: z.ZodType<Prisma.UserUpdateManyArgs> = z.
 
 export const UserDeleteManyArgsSchema: z.ZodType<Prisma.UserDeleteManyArgs> = z.object({
   where: UserWhereInputSchema.optional(),
+}).strict() ;
+
+export const GithubInstallationCreateArgsSchema: z.ZodType<Prisma.GithubInstallationCreateArgs> = z.object({
+  select: GithubInstallationSelectSchema.optional(),
+  include: GithubInstallationIncludeSchema.optional(),
+  data: z.union([ GithubInstallationCreateInputSchema,GithubInstallationUncheckedCreateInputSchema ]),
+}).strict() ;
+
+export const GithubInstallationUpsertArgsSchema: z.ZodType<Prisma.GithubInstallationUpsertArgs> = z.object({
+  select: GithubInstallationSelectSchema.optional(),
+  include: GithubInstallationIncludeSchema.optional(),
+  where: GithubInstallationWhereUniqueInputSchema,
+  create: z.union([ GithubInstallationCreateInputSchema,GithubInstallationUncheckedCreateInputSchema ]),
+  update: z.union([ GithubInstallationUpdateInputSchema,GithubInstallationUncheckedUpdateInputSchema ]),
+}).strict() ;
+
+export const GithubInstallationCreateManyArgsSchema: z.ZodType<Prisma.GithubInstallationCreateManyArgs> = z.object({
+  data: z.union([ GithubInstallationCreateManyInputSchema,GithubInstallationCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
+}).strict() ;
+
+export const GithubInstallationCreateManyAndReturnArgsSchema: z.ZodType<Prisma.GithubInstallationCreateManyAndReturnArgs> = z.object({
+  data: z.union([ GithubInstallationCreateManyInputSchema,GithubInstallationCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
+}).strict() ;
+
+export const GithubInstallationDeleteArgsSchema: z.ZodType<Prisma.GithubInstallationDeleteArgs> = z.object({
+  select: GithubInstallationSelectSchema.optional(),
+  include: GithubInstallationIncludeSchema.optional(),
+  where: GithubInstallationWhereUniqueInputSchema,
+}).strict() ;
+
+export const GithubInstallationUpdateArgsSchema: z.ZodType<Prisma.GithubInstallationUpdateArgs> = z.object({
+  select: GithubInstallationSelectSchema.optional(),
+  include: GithubInstallationIncludeSchema.optional(),
+  data: z.union([ GithubInstallationUpdateInputSchema,GithubInstallationUncheckedUpdateInputSchema ]),
+  where: GithubInstallationWhereUniqueInputSchema,
+}).strict() ;
+
+export const GithubInstallationUpdateManyArgsSchema: z.ZodType<Prisma.GithubInstallationUpdateManyArgs> = z.object({
+  data: z.union([ GithubInstallationUpdateManyMutationInputSchema,GithubInstallationUncheckedUpdateManyInputSchema ]),
+  where: GithubInstallationWhereInputSchema.optional(),
+}).strict() ;
+
+export const GithubInstallationDeleteManyArgsSchema: z.ZodType<Prisma.GithubInstallationDeleteManyArgs> = z.object({
+  where: GithubInstallationWhereInputSchema.optional(),
 }).strict() ;
 
 export const ArticleCreateArgsSchema: z.ZodType<Prisma.ArticleCreateArgs> = z.object({

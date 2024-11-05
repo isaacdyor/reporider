@@ -1,5 +1,4 @@
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
-import { z } from "node_modules/zod/lib";
 import {
   UserCreateInputSchema,
   UserUpdateInputSchema,
@@ -29,6 +28,9 @@ export const usersRouter = createTRPCRouter({
   getCurrent: privateProcedure.query(async ({ ctx }) => {
     return ctx.db.user.findUnique({
       where: { id: ctx.user.id },
+      include: {
+        githubInstallation: true,
+      },
     });
   }),
 });

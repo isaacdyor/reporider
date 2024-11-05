@@ -14,9 +14,9 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/auth/auth-code-error`);
     }
 
-    let user = await api.users.getCurrent();
+    const user = await api.users.getCurrent();
     if (!user) {
-      user = await api.users.create({
+      await api.users.create({
         email: data.user.email!,
         name: data.user.user_metadata.name as string,
         id: "unnecessary",
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       } else {
         url = `https://${forwardedHost}`;
       }
-      if (!user?.githubInstallationId) {
+      if (!user?.githubInstallation) {
         return NextResponse.redirect(
           "https://github.com/apps/reporider-app/installations/new",
         );

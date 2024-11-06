@@ -39,7 +39,47 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
   >("idle");
 
   const { mutate } = api.wordware.inlineEdit.useMutation({
-    onSuccess: () => {
+    onSuccess: (result) => {
+      const { from } = editor.state.selection;
+      editor
+        .chain()
+        .focus()
+        .insertContent([
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                marks: [
+                  {
+                    type: "highlight",
+                    attrs: { color: "var(--highlight-green)" },
+                  },
+                ],
+                text: result.edit,
+              },
+            ],
+          },
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                marks: [
+                  {
+                    type: "highlight",
+                    attrs: { color: "var(--highlight-red)" },
+                  },
+                ],
+                text: editor.state.doc.textBetween(
+                  from,
+                  editor.state.selection.to,
+                ),
+              },
+            ],
+          },
+        ])
+        .run();
       setSubmitStatus("submitted");
     },
   });
@@ -66,6 +106,9 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => form.setFocus("edit"), 0);
+    } else {
+      setSubmitStatus("idle");
+      form.reset();
     }
   }, [form, isOpen]);
 
@@ -111,12 +154,15 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
         asChild
       >
         <div className="relative flex w-80 flex-col gap-2 rounded-md border bg-background p-2 pb-4">
-          <button
-            onClick={() => setIsOpen(false)}
-            className="absolute right-2 top-2 hover:text-foreground"
+          <Button
+            onClick={() => {
+              setIsOpen(false);
+            }}
+            variant="ghost"
+            className="absolute right-2 top-2 size-6 p-0"
           >
-            <X className="size-4 text-muted-foreground" />
-          </button>
+            <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          </Button>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>

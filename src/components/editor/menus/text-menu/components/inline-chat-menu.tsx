@@ -113,7 +113,7 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
   }, [form, isOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && submitStatus === "idle") {
       e.preventDefault();
       void form.handleSubmit(onSubmit)();
     }
@@ -126,11 +126,92 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
         e.preventDefault();
         setIsOpen((prev) => !prev);
       }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setIsOpen(false);
+      }
+      if (
+        e.key === "Enter" &&
+        (e.metaKey || e.ctrlKey) &&
+        submitStatus === "submitted"
+      ) {
+        e.preventDefault();
+        // Find the red highlighted text and remove it
+        // Then remove the highlight from the green text
+        editor
+          .chain()
+          .focus()
+          .command(({ tr, state }) => {
+            const doc = state.doc;
+            doc.descendants((node, pos) => {
+              const marks = node.marks;
+              const isHighlightRed = marks.find(
+                (mark) =>
+                  mark.type.name === "highlight" &&
+                  mark.attrs.color === "var(--highlight-red)",
+              );
+              if (isHighlightRed) {
+                const markType = state.schema.marks.highlight;
+                tr.removeMark(pos, pos + node.nodeSize, markType);
+              }
+              const isHighlightGreen = marks.find(
+                (mark) =>
+                  mark.type.name === "highlight" &&
+                  mark.attrs.color === "var(--highlight-green)",
+              );
+              if (isHighlightGreen) {
+                const markType = state.schema.marks.highlight;
+                tr.removeMark(pos, pos + node.nodeSize, markType);
+              }
+              return false;
+            });
+            return true;
+          })
+          .run();
+      }
+      if (
+        e.key === "Backspace" &&
+        (e.metaKey || e.ctrlKey) &&
+        submitStatus === "submitted"
+      ) {
+        e.preventDefault();
+        // Remove highlight from red text
+        // Delete the green text
+        editor
+          .chain()
+          .focus()
+          .command(({ tr, state }) => {
+            const doc = state.doc;
+            doc.descendants((node, pos) => {
+              const marks = node.marks;
+              const isHighlightGreen = marks.find(
+                (mark) =>
+                  mark.type.name === "highlight" &&
+                  mark.attrs.color === "var(--highlight-green)",
+              );
+              if (isHighlightGreen) {
+                tr.delete(pos, pos + node.nodeSize);
+              }
+              const isHighlightRed = marks.find(
+                (mark) =>
+                  mark.type.name === "highlight" &&
+                  mark.attrs.color === "var(--highlight-red)",
+              );
+              if (isHighlightRed) {
+                const markType = state.schema.marks.highlight;
+                tr.removeMark(pos, pos + node.nodeSize, markType);
+              }
+              return false;
+            });
+            return true;
+          })
+          .run();
+      }
     };
 
     document.addEventListener("keydown", handleGlobalKeyDown);
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
-  }, []);
+  }, [editor, submitStatus]);
 
   return (
     <Popover.Root
@@ -186,15 +267,22 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
                   </FormItem>
                 )}
               />
-              <Button
-                size="thin"
-                type="submit"
-                disabled={submitStatus !== "idle"}
-              >
-                {submitStatus === "submitting" && "Submitting..."}
-                {submitStatus === "submitted" && "Submitted!"}
-                {submitStatus === "idle" && "Submit"}
-              </Button>
+              <div>
+                <Button
+                  size="tiny"
+                  type="submit"
+                  disabled={submitStatus !== "idle"}
+                >
+                  {submitStatus === "submitting" && "Submitting..."}
+                  {submitStatus === "submitted" && "Accept (⌘ ↵)"}
+                  {submitStatus === "idle" && "Submit"}
+                </Button>
+                {submitStatus === "submitted" && (
+                  <Button size="tiny" variant="ghost">
+                    Reject (⌘ ⌫)
+                  </Button>
+                )}
+              </div>
             </form>
           </Form>
         </div>

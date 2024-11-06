@@ -4,6 +4,7 @@ import { useTextmenuCommands } from "./hooks/use-text-menu-commands";
 import { useTextmenuStates } from "./hooks/use-text-menu-statuses";
 import { BubbleMenu, type Editor } from "@tiptap/react";
 import { memo } from "react";
+
 import * as Popover from "@radix-ui/react-popover";
 import { Surface } from "@/components/ui/surface";
 import { ColorPicker } from "@/components/editor/panels";
@@ -11,6 +12,7 @@ import { FontFamilyPicker } from "./components/font-family-picker";
 import { FontSizePicker } from "./components/font-size-picker";
 import { useTextmenuContentTypes } from "./hooks/use-text-menu-content-types";
 import { ContentTypePicker } from "./components/content-type-picker";
+import { InlineChatMenu } from "./components/inline-chat-menu";
 import { EditLinkPopover } from "./components/edit-link-popover";
 
 // We memorize the button so each button is not rerendered
@@ -226,14 +228,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           </Popover.Content>
         </Popover.Root>
         <Toolbar.Divider />
-        <MemoButton
-          tooltip="Chat"
-          tooltipShortcut={["Mod", "K"]}
-          onClick={commands.onToggleChat}
-        >
-          <Icon name="Sparkles" />
-          Chat
-        </MemoButton>
+        <InlineChatMenu editor={editor} />
       </Toolbar.Wrapper>
     </BubbleMenu>
   );

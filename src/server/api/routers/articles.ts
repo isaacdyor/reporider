@@ -39,6 +39,14 @@ export const articlesRouter = createTRPCRouter({
       });
     }),
 
+  delete: privateProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.article.delete({
+        where: { id: input.id },
+      });
+    }),
+
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {

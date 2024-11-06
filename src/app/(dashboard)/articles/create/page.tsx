@@ -53,7 +53,7 @@ export default async function DashboardPage() {
 
   return (
     <DashboardContentLayout>
-      <div className="flex flex-col gap-4 p-8">
+      <div className="grid grid-cols-1 gap-4 p-8 md:grid-cols-2 lg:grid-cols-3">
         {recentRepos.map((repo) => (
           <RepoCard key={repo.id} repo={repo} />
         ))}

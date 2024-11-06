@@ -11,11 +11,15 @@ import {
 } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
 import { Toolbar } from "@/components/ui/toolbar";
+import {
+  handleAcceptChanges,
+  handleRejectChanges,
+} from "@/lib/tiptap/handle-changes";
+import { renderEdits } from "@/lib/tiptap/render-edits";
 import { getContext, getSelection } from "@/lib/wordware/formatNode";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Popover from "@radix-ui/react-popover";
-import { TextSelection } from "@tiptap/pm/state";
 import { type Editor } from "@tiptap/react";
 import { X } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
@@ -30,7 +34,7 @@ const formSchema = z.object({
 
 const MemoButton = memo(Toolbar.Button);
 
-interface ChangePosition {
+export interface ChangePosition {
   suggestedTextPos: { from: number; to: number };
   originalTextPos: { from: number; to: number };
 }
@@ -45,79 +49,7 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
 
   const { mutate } = api.wordware.inlineEdit.useMutation({
     onSuccess: (result) => {
-      const { from, to } = editor.state.selection;
-      const originalPos = { from, to };
-
-      // Store the original content before any changes
-      const originalContent = editor.state.doc.textBetween(
-        originalPos.from,
-        originalPos.to,
-      );
-
-      // Create transaction and ensure selection
-      const tr = editor.state.tr;
-      tr.setSelection(editor.state.selection);
-
-      // Delete the original content first
-      tr.delete(from, to);
-      editor.view.dispatch(tr);
-
-      // Insert and mark suggested (new) content
-      const suggestedFrom = from;
-      editor.commands.insertContent(result.edit, {
-        parseOptions: {
-          preserveWhitespace: false,
-        },
-      });
-      const suggestedTo = editor.state.selection.to;
-
-      // Insert and mark original content
-      const originalFrom = suggestedTo;
-      editor.commands.insertContent(originalContent, {
-        parseOptions: {
-          preserveWhitespace: false,
-        },
-      });
-      const originalTo = editor.state.selection.to;
-
-      // Add highlight marks
-      const highlightMark = editor.schema.marks.highlight;
-      if (!highlightMark) return;
-
-      // Apply highlights in a new transaction
-      const markTr = editor.state.tr;
-
-      // Add green highlight to suggested text
-      markTr.addMark(
-        suggestedFrom,
-        suggestedTo,
-        highlightMark.create({
-          color: "var(--highlight-green)",
-        }),
-      );
-
-      // Add red highlight to original text
-      markTr.addMark(
-        originalFrom,
-        originalTo,
-        highlightMark.create({ color: "var(--highlight-red)" }),
-      );
-
-      // Set the final selection to cover both sections
-      const newSelection = TextSelection.create(
-        markTr.doc,
-        suggestedFrom,
-        originalTo,
-      );
-      markTr.setSelection(newSelection);
-
-      editor.view.dispatch(markTr);
-
-      // Update the current change reference
-      currentChangeRef.current = {
-        suggestedTextPos: { from: suggestedFrom, to: suggestedTo },
-        originalTextPos: { from: originalFrom, to: originalTo },
-      };
+      renderEdits(editor, result.edit, currentChangeRef);
 
       setSubmitStatus("submitted");
     },
@@ -157,40 +89,6 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
     }
   };
 
-  const handleAcceptChanges = () => {
-    if (!currentChangeRef.current) return;
-
-    const { originalTextPos } = currentChangeRef.current;
-
-    const tr = editor.state.tr;
-
-    tr.delete(originalTextPos.from, originalTextPos.to);
-
-    tr.removeMark(0, tr.doc.content.size, editor.schema.marks.highlight);
-
-    editor.view.dispatch(tr);
-    setIsOpen(false);
-    currentChangeRef.current = null;
-  };
-
-  const handleRejectChanges = () => {
-    if (!currentChangeRef.current) return;
-
-    const { suggestedTextPos } = currentChangeRef.current;
-
-    const tr = editor.state.tr;
-
-    // Delete the suggested (green) text
-    tr.delete(suggestedTextPos.from, suggestedTextPos.to);
-
-    // Remove all highlight marks, just like in accept
-    tr.removeMark(0, tr.doc.content.size, editor.schema.marks.highlight);
-
-    editor.view.dispatch(tr);
-    setIsOpen(false);
-    currentChangeRef.current = null;
-  };
-
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -207,7 +105,7 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
         submitStatus === "submitted"
       ) {
         e.preventDefault();
-        handleAcceptChanges();
+        handleAcceptChanges({ editor, currentChangeRef, setIsOpen });
       }
       if (
         e.key === "Backspace" &&
@@ -215,7 +113,7 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
         submitStatus === "submitted"
       ) {
         e.preventDefault();
-        handleRejectChanges();
+        handleRejectChanges({ editor, currentChangeRef, setIsOpen });
       }
     };
 
@@ -291,7 +189,13 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
                   <Button
                     size="tiny"
                     variant="ghost"
-                    onClick={handleRejectChanges}
+                    onClick={() =>
+                      handleRejectChanges({
+                        editor,
+                        currentChangeRef,
+                        setIsOpen,
+                      })
+                    }
                     className="text-muted-foreground"
                   >
                     Reject (⌘ ⌫)

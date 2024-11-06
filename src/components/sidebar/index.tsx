@@ -1,6 +1,6 @@
 "use client";
 
-import { Files, LayoutDashboard, Settings } from "lucide-react";
+import { Files } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { NavMain } from "@/components/sidebar/nav-main";

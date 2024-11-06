@@ -25,7 +25,7 @@ export function SidebarHeader() {
           </SidebarMenuButton>
         </SidebarMenuItem>
         <SidebarMenuItem>
-          <Link href="/repos">
+          <Link href="/articles/create">
             <SidebarMenuButton variant="default" tooltip="Create Article">
               <Plus className="size-4" />
               <span>Create Article</span>

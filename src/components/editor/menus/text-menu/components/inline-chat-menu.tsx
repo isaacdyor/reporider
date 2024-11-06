@@ -1,14 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as Popover from "@radix-ui/react-popover";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -18,11 +11,15 @@ import {
 } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
 import { Toolbar } from "@/components/ui/toolbar";
-import { type Editor } from "@tiptap/react";
-import { X } from "lucide-react";
-import { memo } from "react";
 import { getContext, getSelection } from "@/lib/wordware/formatNode";
 import { api } from "@/trpc/react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as Popover from "@radix-ui/react-popover";
+import { type Editor } from "@tiptap/react";
+import { X } from "lucide-react";
+import { memo, useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const formSchema = z.object({
   edit: z.string().min(1, {
@@ -32,54 +29,60 @@ const formSchema = z.object({
 
 const MemoButton = memo(Toolbar.Button);
 
+interface ChangePosition {
+  suggestedTextPos: { from: number; to: number };
+  originalTextPos: { from: number; to: number };
+}
+
 export function InlineChatMenu({ editor }: { editor: Editor }) {
   const [isOpen, setIsOpen] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "submitting" | "submitted"
   >("idle");
 
+  const currentChangeRef = useRef<ChangePosition | null>(null);
+
   const { mutate } = api.wordware.inlineEdit.useMutation({
     onSuccess: (result) => {
-      const { from } = editor.state.selection;
-      editor
-        .chain()
-        .focus()
-        .insertContent([
-          {
-            type: "paragraph",
-            content: [
-              {
-                type: "text",
-                marks: [
-                  {
-                    type: "highlight",
-                    attrs: { color: "var(--highlight-green)" },
-                  },
-                ],
-                text: result.edit,
-              },
-            ],
-          },
-          {
-            type: "paragraph",
-            content: [
-              {
-                type: "text",
-                marks: [
-                  {
-                    type: "highlight",
-                    attrs: { color: "var(--highlight-red)" },
-                  },
-                ],
-                text: editor.state.doc.textBetween(
-                  from,
-                  editor.state.selection.to,
-                ),
-              },
-            ],
-          },
-        ])
-        .run();
+      const { from, to } = editor.state.selection;
+      const originalPos = { from, to };
+
+      const tr = editor.state.tr;
+
+      const suggestedFrom = tr.selection.from;
+      tr.insertText(result.edit);
+      const suggestedTo = tr.selection.from;
+
+      const highlightMark = editor.schema.marks.highlight;
+      if (!highlightMark) return;
+
+      tr.addMark(
+        suggestedFrom,
+        suggestedTo,
+        highlightMark.create({
+          color: "var(--highlight-green)",
+        }),
+      );
+
+      const originalFrom = tr.selection.from;
+      tr.insertText(
+        editor.state.doc.textBetween(originalPos.from, originalPos.to),
+      );
+      const originalTo = tr.selection.from;
+
+      tr.addMark(
+        originalFrom,
+        originalTo,
+        highlightMark.create({ color: "var(--highlight-red)" }),
+      );
+
+      editor.view.dispatch(tr);
+
+      currentChangeRef.current = {
+        suggestedTextPos: { from: suggestedFrom, to: suggestedTo },
+        originalTextPos: { from: originalFrom, to: originalTo },
+      };
+
       setSubmitStatus("submitted");
     },
   });
@@ -102,7 +105,6 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
     });
   }
 
-  // Focus the textarea when the menu opens
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => form.setFocus("edit"), 0);
@@ -119,7 +121,40 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
     }
   };
 
-  // keyboard shortcut
+  const handleAcceptChanges = () => {
+    if (!currentChangeRef.current) return;
+
+    const { originalTextPos } = currentChangeRef.current;
+
+    const tr = editor.state.tr;
+
+    tr.delete(originalTextPos.from, originalTextPos.to);
+
+    tr.removeMark(0, tr.doc.content.size, editor.schema.marks.highlight);
+
+    editor.view.dispatch(tr);
+    setIsOpen(false);
+    currentChangeRef.current = null;
+  };
+
+  const handleRejectChanges = () => {
+    if (!currentChangeRef.current) return;
+
+    const { suggestedTextPos } = currentChangeRef.current;
+
+    const tr = editor.state.tr;
+
+    // Delete the suggested (green) text
+    tr.delete(suggestedTextPos.from, suggestedTextPos.to);
+
+    // Remove all highlight marks, just like in accept
+    tr.removeMark(0, tr.doc.content.size, editor.schema.marks.highlight);
+
+    editor.view.dispatch(tr);
+    setIsOpen(false);
+    currentChangeRef.current = null;
+  };
+
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -136,38 +171,7 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
         submitStatus === "submitted"
       ) {
         e.preventDefault();
-        // Find the red highlighted text and remove it
-        // Then remove the highlight from the green text
-        editor
-          .chain()
-          .focus()
-          .command(({ tr, state }) => {
-            const doc = state.doc;
-            doc.descendants((node, pos) => {
-              const marks = node.marks;
-              const isHighlightRed = marks.find(
-                (mark) =>
-                  mark.type.name === "highlight" &&
-                  mark.attrs.color === "var(--highlight-red)",
-              );
-              if (isHighlightRed) {
-                const markType = state.schema.marks.highlight;
-                tr.removeMark(pos, pos + node.nodeSize, markType);
-              }
-              const isHighlightGreen = marks.find(
-                (mark) =>
-                  mark.type.name === "highlight" &&
-                  mark.attrs.color === "var(--highlight-green)",
-              );
-              if (isHighlightGreen) {
-                const markType = state.schema.marks.highlight;
-                tr.removeMark(pos, pos + node.nodeSize, markType);
-              }
-              return false;
-            });
-            return true;
-          })
-          .run();
+        handleAcceptChanges();
       }
       if (
         e.key === "Backspace" &&
@@ -175,37 +179,7 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
         submitStatus === "submitted"
       ) {
         e.preventDefault();
-        // Remove highlight from red text
-        // Delete the green text
-        editor
-          .chain()
-          .focus()
-          .command(({ tr, state }) => {
-            const doc = state.doc;
-            doc.descendants((node, pos) => {
-              const marks = node.marks;
-              const isHighlightGreen = marks.find(
-                (mark) =>
-                  mark.type.name === "highlight" &&
-                  mark.attrs.color === "var(--highlight-green)",
-              );
-              if (isHighlightGreen) {
-                tr.delete(pos, pos + node.nodeSize);
-              }
-              const isHighlightRed = marks.find(
-                (mark) =>
-                  mark.type.name === "highlight" &&
-                  mark.attrs.color === "var(--highlight-red)",
-              );
-              if (isHighlightRed) {
-                const markType = state.schema.marks.highlight;
-                tr.removeMark(pos, pos + node.nodeSize, markType);
-              }
-              return false;
-            });
-            return true;
-          })
-          .run();
+        handleRejectChanges();
       }
     };
 
@@ -278,7 +252,11 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
                   {submitStatus === "idle" && "Submit"}
                 </Button>
                 {submitStatus === "submitted" && (
-                  <Button size="tiny" variant="ghost">
+                  <Button
+                    size="tiny"
+                    variant="ghost"
+                    onClick={handleRejectChanges}
+                  >
                     Reject (⌘ ⌫)
                   </Button>
                 )}

@@ -48,18 +48,47 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
       const { from, to } = editor.state.selection;
       const originalPos = { from, to };
 
-      const tr = editor.state.tr;
+      // Store the original content before any changes
+      const originalContent = editor.state.doc.textBetween(
+        originalPos.from,
+        originalPos.to,
+      );
 
+      // Create transaction and ensure selection
+      const tr = editor.state.tr;
       tr.setSelection(editor.state.selection);
 
-      const suggestedFrom = tr.selection.from;
-      tr.insertText(result.edit);
-      const suggestedTo = tr.selection.from;
+      // Delete the original content first
+      tr.delete(from, to);
+      editor.view.dispatch(tr);
 
+      // Insert and mark suggested (new) content
+      const suggestedFrom = from;
+      editor.commands.insertContent(result.edit, {
+        parseOptions: {
+          preserveWhitespace: false,
+        },
+      });
+      const suggestedTo = editor.state.selection.to;
+
+      // Insert and mark original content
+      const originalFrom = suggestedTo;
+      editor.commands.insertContent(originalContent, {
+        parseOptions: {
+          preserveWhitespace: false,
+        },
+      });
+      const originalTo = editor.state.selection.to;
+
+      // Add highlight marks
       const highlightMark = editor.schema.marks.highlight;
       if (!highlightMark) return;
 
-      tr.addMark(
+      // Apply highlights in a new transaction
+      const markTr = editor.state.tr;
+
+      // Add green highlight to suggested text
+      markTr.addMark(
         suggestedFrom,
         suggestedTo,
         highlightMark.create({
@@ -67,27 +96,24 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
         }),
       );
 
-      const originalFrom = tr.selection.from;
-      tr.insertText(
-        editor.state.doc.textBetween(originalPos.from, originalPos.to),
-      );
-      const originalTo = tr.selection.from;
-
-      tr.addMark(
+      // Add red highlight to original text
+      markTr.addMark(
         originalFrom,
         originalTo,
         highlightMark.create({ color: "var(--highlight-red)" }),
       );
 
+      // Set the final selection to cover both sections
       const newSelection = TextSelection.create(
-        tr.doc,
+        markTr.doc,
         suggestedFrom,
         originalTo,
       );
-      tr.setSelection(newSelection);
+      markTr.setSelection(newSelection);
 
-      editor.view.dispatch(tr);
+      editor.view.dispatch(markTr);
 
+      // Update the current change reference
       currentChangeRef.current = {
         suggestedTextPos: { from: suggestedFrom, to: suggestedTo },
         originalTextPos: { from: originalFrom, to: originalTo },
@@ -251,11 +277,11 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
                   </FormItem>
                 )}
               />
-              <div>
+              <div className="flex gap-2">
                 <Button
                   size="tiny"
                   type="submit"
-                  disabled={submitStatus !== "idle"}
+                  disabled={submitStatus === "submitting"}
                 >
                   {submitStatus === "submitting" && "Submitting..."}
                   {submitStatus === "submitted" && "Accept (⌘ ↵)"}
@@ -266,6 +292,7 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
                     size="tiny"
                     variant="ghost"
                     onClick={handleRejectChanges}
+                    className="text-muted-foreground"
                   >
                     Reject (⌘ ⌫)
                   </Button>

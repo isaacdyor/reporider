@@ -41,18 +41,46 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const selection = editor.state.selection;
+    const doc = editor.view.state.doc;
 
-    const selectedText = editor.state.selection.empty
+    // Get the selected text
+    const selectedText = selection.empty
       ? ""
-      : editor.view.state.doc.textBetween(
-          editor.state.selection.from,
-          editor.state.selection.to,
-        );
+      : doc.textBetween(selection.from, selection.to);
 
-    console.log("Selected text:", selectedText);
-    console.log("Form values:", values);
+    // Calculate the context window (100 characters before and after)
+    const contextWindow = 100;
+
+    // Get text before selection
+    const beforeStart = Math.max(0, selection.from - contextWindow);
+    const beforeText = doc.textBetween(beforeStart, selection.from);
+
+    // Get text after selection
+    const afterEnd = Math.min(doc.content.size, selection.to + contextWindow);
+    const afterText = doc.textBetween(selection.to, afterEnd);
+
+    const selectionContext = {
+      selectedText,
+      context: {
+        before: beforeText,
+        after: afterText,
+      },
+    };
+
+    console.log("Selection context:", selectionContext);
+    // const selectedText = editor.state.selection.empty
+    //   ? ""
+    //   : editor.view.state.doc.textBetween(
+    //       editor.state.selection.from,
+    //       editor.state.selection.to,
+    //     );
+
+    // console.log("Selected text:", selectedText);
+    // console.log("Form values:", values);
   }
+
+  // Focus the textarea when the menu opens
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => form.setFocus("message"), 0);
@@ -66,7 +94,7 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
     }
   };
 
-  // Add useEffect for global keyboard shortcut
+  // keyboard shortcut
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {

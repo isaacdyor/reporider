@@ -15,6 +15,7 @@ import { getContext, getSelection } from "@/lib/wordware/formatNode";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Popover from "@radix-ui/react-popover";
+import { TextSelection } from "@tiptap/pm/state";
 import { type Editor } from "@tiptap/react";
 import { X } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
@@ -49,6 +50,8 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
 
       const tr = editor.state.tr;
 
+      tr.setSelection(editor.state.selection);
+
       const suggestedFrom = tr.selection.from;
       tr.insertText(result.edit);
       const suggestedTo = tr.selection.from;
@@ -75,6 +78,13 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
         originalTo,
         highlightMark.create({ color: "var(--highlight-red)" }),
       );
+
+      const newSelection = TextSelection.create(
+        tr.doc,
+        suggestedFrom,
+        originalTo,
+      );
+      tr.setSelection(newSelection);
 
       editor.view.dispatch(tr);
 

@@ -65,13 +65,13 @@ export const wordwareRouter = createTRPCRouter({
   inlineEdit: publicProcedure
     .input(
       z.object({
-        selected: z.string().min(1),
+        selection: z.string().min(1),
         context: z.string().min(1),
         edit: z.string().min(1),
       }),
     )
     .mutation(async ({ input }) => {
-      const appSlug = "540d322c-32f3-4b9b-a18d-9c6a5dd67551";
+      const appSlug = "2a4b4958-590e-4223-b853-238c3299009d";
       const endpoint = getEndpoint(appSlug);
       const response = await fetch(endpoint, {
         method: "POST",
@@ -81,7 +81,7 @@ export const wordwareRouter = createTRPCRouter({
         },
         body: JSON.stringify({
           inputs: {
-            selected: input.selected,
+            selection: input.selection,
             context: input.context,
             edit: input.edit,
           },

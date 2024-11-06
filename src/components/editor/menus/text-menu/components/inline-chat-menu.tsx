@@ -21,9 +21,11 @@ import { Toolbar } from "@/components/ui/toolbar";
 import { type Editor } from "@tiptap/react";
 import { X } from "lucide-react";
 import { memo } from "react";
+import { getContext, getSelection } from "@/lib/wordware/formatNode";
+import { api } from "@/trpc/react";
 
 const formSchema = z.object({
-  message: z.string().min(1, {
+  edit: z.string().min(1, {
     message: "Message must be at least 1 character.",
   }),
 });
@@ -32,58 +34,38 @@ const MemoButton = memo(Toolbar.Button);
 
 export function InlineChatMenu({ editor }: { editor: Editor }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "submitting" | "submitted"
+  >("idle");
+
+  const { mutate } = api.wordware.inlineEdit.useMutation({
+    onSuccess: () => {
+      setSubmitStatus("submitted");
+    },
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      message: "",
+      edit: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const selection = editor.state.selection;
-    const doc = editor.view.state.doc;
-
-    // Get the selected text
-    const selectedText = selection.empty
-      ? ""
-      : doc.textBetween(selection.from, selection.to);
-
-    // Calculate the context window (100 characters before and after)
-    const contextWindow = 100;
-
-    // Get text before selection
-    const beforeStart = Math.max(0, selection.from - contextWindow);
-    const beforeText = doc.textBetween(beforeStart, selection.from);
-
-    // Get text after selection
-    const afterEnd = Math.min(doc.content.size, selection.to + contextWindow);
-    const afterText = doc.textBetween(selection.to, afterEnd);
-
-    const selectionContext = {
-      selectedText,
-      context: {
-        before: beforeText,
-        after: afterText,
-      },
-    };
-
-    console.log("Selection context:", selectionContext);
-    // const selectedText = editor.state.selection.empty
-    //   ? ""
-    //   : editor.view.state.doc.textBetween(
-    //       editor.state.selection.from,
-    //       editor.state.selection.to,
-    //     );
-
-    // console.log("Selected text:", selectedText);
-    // console.log("Form values:", values);
+    setSubmitStatus("submitting");
+    const context = getContext(editor);
+    const selection = getSelection(editor);
+    mutate({
+      context: JSON.stringify(context),
+      selection: selection ?? "",
+      edit: values.edit,
+    });
   }
 
   // Focus the textarea when the menu opens
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => form.setFocus("message"), 0);
+      setTimeout(() => form.setFocus("edit"), 0);
     }
   }, [form, isOpen]);
 
@@ -108,7 +90,15 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
   }, []);
 
   return (
-    <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
+    <Popover.Root
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) {
+          setSubmitStatus("idle");
+        }
+      }}
+    >
       <Popover.Trigger asChild>
         <MemoButton tooltip="Chat" tooltipShortcut={["Mod", "K"]}>
           <Icon name="Sparkles" />
@@ -132,7 +122,7 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <FormField
                 control={form.control}
-                name="message"
+                name="edit"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-semibold text-foreground">
@@ -150,8 +140,14 @@ export function InlineChatMenu({ editor }: { editor: Editor }) {
                   </FormItem>
                 )}
               />
-              <Button size="thin" type="submit">
-                {form.formState.isSubmitting ? "Submitting..." : "Submit"}
+              <Button
+                size="thin"
+                type="submit"
+                disabled={submitStatus !== "idle"}
+              >
+                {submitStatus === "submitting" && "Submitting..."}
+                {submitStatus === "submitted" && "Submitted!"}
+                {submitStatus === "idle" && "Submit"}
               </Button>
             </form>
           </Form>

@@ -1,6 +1,7 @@
 import { DashboardContentLayout } from "@/components/dashboard-content-layout";
 import { RepoCard } from "@/components/repo-card";
 import { getOctokit } from "@/lib/github/octokit";
+import { CreateBlankButton } from "./create-blank-button";
 
 const REPOS_TO_DISPLAY = 30;
 
@@ -52,7 +53,7 @@ export default async function DashboardPage() {
     .slice(0, REPOS_TO_DISPLAY);
 
   return (
-    <DashboardContentLayout>
+    <DashboardContentLayout rightComponent={<CreateBlankButton />}>
       <div className="grid grid-cols-1 gap-4 p-8 md:grid-cols-2 lg:grid-cols-3">
         {recentRepos.map((repo) => (
           <RepoCard key={repo.id} repo={repo} />

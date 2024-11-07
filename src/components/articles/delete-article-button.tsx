@@ -11,24 +11,34 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export function DeleteArticleButton({ articleId }: { articleId: string }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+
   const utils = api.useUtils();
+
   const { mutate } = api.articles.delete.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      setOpen(false);
+      setIsLoading(false);
       toast.success("Article deleted");
-      void utils.articles.getAll.invalidate();
+      // invalidation not working because we are querying on the server. Easy fix to prefetch on server
+      await utils.articles.getAll.invalidate();
     },
   });
 
   const handleDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
+    e.preventDefault();
+    setIsLoading(true);
     mutate({ id: articleId });
   };
 
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         <Button
           onClick={(e) => e.stopPropagation()}
@@ -48,7 +58,9 @@ export function DeleteArticleButton({ articleId }: { articleId: string }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+          <AlertDialogAction onClick={handleDelete} disabled={isLoading}>
+            {isLoading ? "Deleting..." : "Delete"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
